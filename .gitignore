@@ -1,0 +1,53 @@
+# Node.js dependencies (common for both frontend and backend)
+node_modules/
+
+# Build artifacts and temporary files
+build/
+dist/
+.parcel-cache/
+.next/ # Next.js specific
+public/build/ # If frontend builds into a public/build directory
+tmp/
+temp/
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System and IDE specific files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.bak
+Thumbs.db
+
+# Backend specific ignores (e.g., Python, Java, etc.)
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/ # Virtual environment
+
+# Java
+target/
+.gradle/
+build/
+
+# Frontend specific ignores (e.g., React, Vue, Angular)
+# If using a specific framework's build output folder not covered by general `build/`
+# For example, if your React app builds to `out/`
+# out/
+# Frontend (React) build output
+# Assuming your React app is in a `frontend` or `client` folder and builds to a `build` directory.
+/frontend/build/
+/frontend/client/build/
