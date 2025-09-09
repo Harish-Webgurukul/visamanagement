@@ -46,7 +46,7 @@ export default function Enquiry() {
           <p className="text-sm text-gray-500">Manage all customer enquiries in one place.</p>
         </div>
         <button
-          onClick={() => navigate("/add-user")}
+          onClick={() => navigate("/add-enquiry")}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
           ➕ Add Enquiry
@@ -107,7 +107,7 @@ export default function Enquiry() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-user/${u._id}`)}
+                                  onClick={() => navigate(`/add-enquiry/${u._id}`)}
                                   className={`${
                                     active ? "bg-gray-100" : ""
                                   } w-full text-left px-4 py-2 text-sm text-gray-700`}

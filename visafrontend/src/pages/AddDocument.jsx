@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function AddDocument() {
+  const navigate = useNavigate();
+  const { id } = useParams(); // ✅ get :id from route
+  const isEditMode = Boolean(id);
+
   const [formData, setFormData] = useState({
     country: "",
     purpose: "",
@@ -12,30 +17,66 @@ export default function AddDocument() {
     isTemplate: false,
   });
 
-  const [countries, setCountries] = useState([]); // ✅ start as array
-  const [purposes, setPurposes] = useState([]); // ✅ start as array
+  const [countries, setCountries] = useState([]);
+  const [purposes, setPurposes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   // Fetch dropdown data
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/country")
-      .then((res) => {
-        console.log("Countries API response:", res.data);
-        // ✅ adjust based on API shape
-        setCountries(Array.isArray(res.data) ? res.data : res.data.countries || []);
-      })
-      .catch((err) => console.error(err));
+    const fetchDropdowns = async () => {
+      try {
+        const [countryRes, purposeRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/country"),
+          axios.get("http://localhost:5000/api/visapurpose"),
+        ]);
 
-    axios
-      .get("http://localhost:5000/api/visapurpose")
-      .then((res) => {
-        console.log("VisaPurpose API response:", res.data);
-        setPurposes(Array.isArray(res.data) ? res.data : res.data.purposes || []);
-      })
-      .catch((err) => console.error(err));
+        setCountries(
+          Array.isArray(countryRes.data)
+            ? countryRes.data
+            : countryRes.data.data || countryRes.data.countries || []
+        );
+
+        setPurposes(
+          Array.isArray(purposeRes.data)
+            ? purposeRes.data
+            : purposeRes.data.data || purposeRes.data.purposes || []
+        );
+      } catch (err) {
+        console.error("Dropdown fetch failed:", err);
+        setCountries([]);
+        setPurposes([]);
+      }
+    };
+
+    fetchDropdowns();
   }, []);
+
+  // ✅ Fetch document if editing
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchDocument = async () => {
+        try {
+          const res = await axios.get(`http://localhost:5000/api/document/${id}`);
+          const doc = res.data.data || res.data; // depends on your API response
+          setFormData({
+            country: doc.country?._id || "",
+            purpose: doc.purpose?._id || "",
+            name: doc.name || "",
+            requiredDocuments: doc.requiredDocuments?.length
+              ? doc.requiredDocuments
+              : [""],
+            tags: doc.tags?.length ? doc.tags : [""],
+            notes: doc.notes || "",
+            isTemplate: doc.isTemplate || false,
+          });
+        } catch (err) {
+          console.error("❌ Error fetching document:", err);
+        }
+      };
+      fetchDocument();
+    }
+  }, [id, isEditMode]);
 
   // Handle form input
   const handleChange = (e) => {
@@ -46,7 +87,7 @@ export default function AddDocument() {
     }));
   };
 
-  // Handle array fields (requiredDocuments, tags)
+  // Handle array fields
   const handleArrayChange = (index, field, value) => {
     setFormData((prev) => {
       const updated = [...prev[field]];
@@ -77,17 +118,17 @@ export default function AddDocument() {
     setMessage("");
 
     try {
-      await axios.post("http://localhost:5000/api/document", formData);
-      setMessage("✅ Document added successfully!");
-      setFormData({
-        country: "",
-        purpose: "",
-        name: "",
-        requiredDocuments: [""],
-        tags: [""],
-        notes: "",
-        isTemplate: false,
-      });
+      if (isEditMode) {
+        await axios.put(`http://localhost:5000/api/document/${id}`, formData);
+        setMessage("✅ Document updated successfully!");
+      } else {
+        await axios.post("http://localhost:5000/api/document", formData);
+        setMessage("✅ Document added successfully!");
+      }
+
+      setTimeout(() => {
+        navigate("/document");
+      }, 1500);
     } catch (err) {
       console.error(err);
       setMessage("❌ Error: Could not save Document.");
@@ -99,7 +140,7 @@ export default function AddDocument() {
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-        Add Document
+        {isEditMode ? "Edit Document" : "Add Document"}
       </h2>
 
       {message && (
@@ -149,7 +190,7 @@ export default function AddDocument() {
           </select>
         </div>
 
-        {/* Document Name */}
+        {/* Name */}
         <div>
           <label className="block text-gray-700 font-medium mb-1">Name *</label>
           <input
@@ -256,7 +297,7 @@ export default function AddDocument() {
           disabled={loading}
           className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Add Document"}
+          {loading ? "Saving..." : isEditMode ? "Update Document" : "Add Document"}
         </button>
       </form>
     </div>

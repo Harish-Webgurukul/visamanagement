@@ -1,11 +1,10 @@
-
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function AddEnquiry() {
   const navigate = useNavigate();
+  const { id } = useParams(); // 👈 for edit mode
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -25,6 +24,43 @@ export default function AddEnquiry() {
     isGuest: true,
   });
 
+  const [loading, setLoading] = useState(false);
+
+  // 🔹 Fetch enquiry data for edit mode
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      axios
+        .get(`http://localhost:5000/api/enquiry/${id}`)
+        .then((res) => {
+          const enquiry = res.data.data;
+          setFormData({
+            customerName: enquiry.customerName || "",
+            email: enquiry.email || "",
+            mobile: enquiry.mobile || "",
+            source: enquiry.source || "",
+            assignedTo: enquiry.assignedTo || "",
+            country: enquiry.country || "",
+            purpose: enquiry.purpose || "",
+            travelFrom: enquiry.travelDates?.from?.substring(0, 10) || "",
+            travelTo: enquiry.travelDates?.to?.substring(0, 10) || "",
+            adults: enquiry.adults || 1,
+            children: enquiry.children || 0,
+            selectedVisaOption: enquiry.selectedVisaOption || "",
+            status: enquiry.status || "new",
+            notes: enquiry.notes || "",
+            isGuest: enquiry.isGuest ?? true,
+          });
+        })
+        .catch((err) => {
+          console.error("❌ Failed to fetch enquiry:", err);
+          alert("Failed to load enquiry details.");
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  // 🔹 Handle Input Change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -33,11 +69,10 @@ export default function AddEnquiry() {
     });
   };
 
+  // 🔹 Submit Form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      // ✅ prepare only allowed fields (backend expects this format)
       const payload = {
         customerName: formData.customerName,
         email: formData.email || undefined,
@@ -58,20 +93,28 @@ export default function AddEnquiry() {
         isGuest: formData.isGuest,
       };
 
-      await axios.post("http://localhost:5000/api/enquiry", payload);
+      if (id) {
+        await axios.put(`http://localhost:5000/api/enquiry/${id}`, payload);
+        alert("✅ Enquiry updated successfully!");
+      } else {
+        await axios.post("http://localhost:5000/api/enquiry", payload);
+        alert("✅ Enquiry submitted successfully!");
+      }
 
-      alert("✅ Enquiry submitted successfully!");
-      navigate("/enquiry"); // 👈 redirect back to enquiries list
-
+      navigate("/enquiry");
     } catch (err) {
       console.error("❌ Error submitting enquiry:", err.response?.data || err.message);
       alert("Error submitting enquiry. Please try again.");
     }
   };
 
+  if (loading) return <p className="text-center mt-10">Loading enquiry...</p>;
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md mt-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Add New Enquiry</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        {id ? "Edit Enquiry" : "Add New Enquiry"}
+      </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Customer Name */}
@@ -267,12 +310,10 @@ export default function AddEnquiry() {
             type="submit"
             className="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-500 transition duration-200"
           >
-            Submit
+            {id ? "Update Enquiry" : "Submit Enquiry"}
           </button>
         </div>
       </form>
     </div>
   );
 }
-
-

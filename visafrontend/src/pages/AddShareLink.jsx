@@ -18,24 +18,28 @@ export default function AddShareLink() {
   // Fetch visa options
   const fetchVisaOptions = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/visa-option");
-      setVisaOptions(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      const res = await axios.get("http://localhost:5000/api/visaoption");
+      // Support both res.data = array OR res.data.data = array
+      const options = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setVisaOptions(options);
     } catch (err) {
       console.error("❌ Error fetching visa options:", err);
+      setVisaOptions([]);
     }
   };
 
-  // Fetch share link data if editing
+  // Fetch share link if editing
   const fetchShareLink = async () => {
     if (!id) return;
     try {
-      const res = await axios.get(`http://localhost:5000/api/share-link/${id}`);
-      if (res.data) {
+      const res = await axios.get(`http://localhost:5000/api/sharelink/${id}`);
+      const data = res.data?.data || res.data; // support both formats
+      if (data) {
         setFormData({
-          visaOption: res.data.visaOption?._id || "",
-          token: res.data.token || "",
-          expiresAt: res.data.expiresAt ? res.data.expiresAt.slice(0, 10) : "",
-          isOneTime: res.data.isOneTime || false,
+          visaOption: data.visaOption?._id || data.visaOption || "",
+          token: data.token || "",
+          expiresAt: data.expiresAt ? data.expiresAt.slice(0, 10) : "",
+          isOneTime: data.isOneTime || false,
         });
       }
     } catch (err) {
@@ -43,18 +47,19 @@ export default function AddShareLink() {
     }
   };
 
+  // Load visa options first, then share link (for edit mode)
   useEffect(() => {
-    fetchVisaOptions();
-    fetchShareLink();
-  }, []);
+    const loadData = async () => {
+      await fetchVisaOptions();
+      await fetchShareLink();
+    };
+    loadData();
+  }, [id]);
 
   // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   // Auto-generate token
@@ -71,10 +76,10 @@ export default function AddShareLink() {
 
     try {
       if (id) {
-        await axios.put(`http://localhost:5000/api/share-link/${id}`, formData);
+        await axios.put(`http://localhost:5000/api/sharelink/${id}`, formData);
         setMessage("✅ Share Link updated successfully!");
       } else {
-        await axios.post("http://localhost:5000/api/share-link", formData);
+        await axios.post("http://localhost:5000/api/sharelink", formData);
         setMessage("✅ Share Link added successfully!");
         setFormData({ visaOption: "", token: "", expiresAt: "", isOneTime: false });
       }

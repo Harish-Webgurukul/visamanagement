@@ -80,7 +80,7 @@ export const SIDE_MENU_ADMIN_DATA = [
   },
   {
     name: "Audit Log",
-    href: "/auditlog",
+    href: "/auditLog",
     icon: ShieldCheckIcon,
     current: false,
   },

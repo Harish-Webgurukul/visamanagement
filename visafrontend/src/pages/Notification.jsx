@@ -1,43 +1,36 @@
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
-export default function ShareLinks() {
-  const [links, setLinks] = useState([]);
-  const [, setVisaOptions] = useState([]);
+export default function Notification() {
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch share links and visa options
-  const fetchData = async () => {
+  // Fetch notifications
+  const fetchNotifications = async () => {
     try {
-      const [linksRes, visaRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/sharelink"),
-        axios.get("http://localhost:5000/api/visaoption")
-      ]);
-
-      setLinks(Array.isArray(linksRes.data) ? linksRes.data : linksRes.data?.data || []);
-      setVisaOptions(Array.isArray(visaRes.data) ? visaRes.data : visaRes.data?.data || []);
+      const res = await axios.get("http://localhost:5000/api/notification");
+      setNotifications(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
-      console.error("❌ Error fetching data:", err);
-      setLinks([]);
-      setVisaOptions([]);
+      console.error("❌ Error fetching notifications:", err);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchNotifications();
   }, []);
 
-  // Delete share link
+  // Delete notification
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this share link?")) {
+    if (window.confirm("Are you sure you want to delete this notification?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/sharelink/${id}`);
-        fetchData();
+        await axios.delete(`http://localhost:5000/api/notification/${id}`);
+        fetchNotifications();
       } catch (err) {
-        console.error("❌ Error deleting share link:", err);
+        console.error("❌ Error deleting notification:", err);
       }
     }
   };
@@ -47,14 +40,16 @@ export default function ShareLinks() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Share Links</h1>
-          <p className="text-sm text-gray-500">Manage all visa share links in one place.</p>
+          <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
+          <p className="text-sm text-gray-500">
+            Manage all system notifications in one place.
+          </p>
         </div>
         <button
-          onClick={() => navigate("/add-sharelink")}
+          onClick={() => navigate("/add-notification")}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
-          ➕ Add Share Link
+          ➕ Add Notification
         </button>
       </div>
 
@@ -63,39 +58,37 @@ export default function ShareLinks() {
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
             <tr>
-              <th className="p-3 text-left">Visa Option</th>
-              <th className="p-3 text-left">Token</th>
-              <th className="p-3 text-left">Clicks</th>
-              <th className="p-3 text-left">Expires At</th>
-              <th className="p-3 text-left">One-Time</th>
+              <th className="p-3 text-left">Title</th>
+              <th className="p-3 text-left">Type</th>
+              <th className="p-3 text-left">To User / Contact</th>
+              <th className="p-3 text-left">Status</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {links.length > 0 ? (
-              links.map((link, index) => (
+            {notifications.length > 0 ? (
+              notifications.map((n, index) => (
                 <tr
-                  key={link._id}
+                  key={n._id}
                   className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                 >
-                  <td className="p-3 font-medium text-gray-700">
-                    {link.visaOption?.title || "-"}
-                  </td>
-                  <td className="p-3 text-gray-600">{link.token}</td>
-                  <td className="p-3 text-gray-600">{link.clicks}</td>
+                  <td className="p-3 font-medium text-gray-700">{n.title || "-"}</td>
+                  <td className="p-3 text-gray-600">{n.type}</td>
                   <td className="p-3 text-gray-600">
-                    {link.expiresAt ? new Date(link.expiresAt).toLocaleDateString() : "-"}
+                    {n.toUser ? `User ID: ${n.toUser}` : `${n.toContact?.email || "-"} / ${n.toContact?.mobile || "-"}`}
                   </td>
-                  <td className="p-3 text-center">
-                    {link.isOneTime ? (
-                      <span className="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">
-                        Yes
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">
-                        No
-                      </span>
-                    )}
+                  <td>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                        n.status === "queued"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : n.status === "sent"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {n.status}
+                    </span>
                   </td>
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
@@ -116,7 +109,7 @@ export default function ShareLinks() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-sharelink/${link._id}`)}
+                                  onClick={() => navigate(`/add-notification/${n._id}`)}
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   Edit
@@ -126,7 +119,7 @@ export default function ShareLinks() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => handleDelete(link._id)}
+                                  onClick={() => handleDelete(n._id)}
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
@@ -142,8 +135,8 @@ export default function ShareLinks() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="p-6 text-center text-gray-500 italic">
-                  No share links found 🚫
+                <td colSpan="5" className="p-6 text-center text-gray-500 italic">
+                  No notifications found 🚫
                 </td>
               </tr>
             )}

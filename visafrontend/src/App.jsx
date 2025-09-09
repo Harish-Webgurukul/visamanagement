@@ -34,6 +34,12 @@ import AddCustomerDoc from "./pages/AddCustomerDoc";
 import CustomerDocs from "./pages/CustomerDocs";
 import AddShareLink from "./pages/AddShareLink";
 import ShareLinks from "./pages/ShareLinks";
+import Notification from "./pages/Notification";
+import AddNotification from "./pages/AddNotification";
+import AuditLog from "./pages/AuditLog";
+import AddAuditLog from "./pages/AddAuditLog";
+import Permission from "./pages/Permission";
+import AddPermission from "./pages/AddPermission";
 
 
 const App = () => {
@@ -46,24 +52,53 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/enquiry" element={<Enquiry />} />
-              <Route path="/add-user" element={<AddEnquiry />} />
+
+              <Route path="/permission" element={<Permission />} />
+              <Route path="/add-permission" element={<AddPermission />} />
+              <Route path="/add-permission/:id" element={<AddPermission />} />
+
               <Route path="/role" element={<Role/>} />
               <Route path="/add-role" element={<AddRoles />} />
+              <Route path="/add-role/:id" element={<AddRoles />} />
+
               <Route path="/country" element={<Country />} />
               <Route path="/add-country" element={<AddCountry />} />
+              <Route path="/add-country/:id" element={<AddCountry />} />
+
               <Route path="/visaPurpose" element={<VisaPurpose />} />
               <Route path="/add-visapurpose" element={<AddVisaPurpose />} />
+              <Route path="/add-visapurpose/:id" element={<AddVisaPurpose />} />
+
               <Route path="/visaoption" element={<VisaOption />} />
               <Route path="/add-visaoption" element={<AddVisaOption />} />
+              <Route path="/add-visaoption/:id" element={<AddVisaOption />} />
+
               <Route path="/document" element={<Document />} />
               <Route path="/add-dacument" element={<AddDocument />} />
+              <Route path="/add-dacument/:id" element={<AddDocument />} />
+
+              <Route path="/enquiry" element={<Enquiry />} />
+              <Route path="/add-enquiry" element={<AddEnquiry />} />
+              <Route path="/add-enquiry/:id" element={<AddEnquiry />} />
+
               <Route path="/followup" element={<Followup />} />
               <Route path="/add-followup" element={<AddFollowup />} />
+              <Route path="/add-followup/:id" element={<AddFollowup />} />
+
+
               <Route path="/customerDocs" element={<CustomerDocs />} />
               <Route path="/add-CustomerDoc" element={<AddCustomerDoc />} />
+
               <Route path="/sharelink" element={<ShareLinks />} />
               <Route path="/add-sharelink" element={<AddShareLink />} />
+              <Route path="/add-sharelink/:id" element={<AddShareLink />} />
+
+              <Route path="/notification" element={<Notification />} />
+              <Route path="/add-notification" element={<AddNotification />} />
+              <Route path="/add-notification/:id" element={<AddNotification />} />
+
+              <Route path="/auditLog" element={<AuditLog />} />
+              <Route path="/add-auditLog" element={<AddAuditLog />} />
             </Route>
             <Route path="/" element={<Root />} />
             <Route path="*" element={<NotFound />} />

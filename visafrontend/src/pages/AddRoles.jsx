@@ -1,197 +1,12 @@
-// // AddRoles.jsx
-// import { useState, useEffect } from "react";
-// import axios from "axios";
-
-// export default function AddRoles({ roleId }) {
-//   const [role, setRole] = useState({
-//     name: "",
-//     description: "",
-//     permissions: [],
-//     inherits: [],
-//     isSystem: false,
-//   });
-
-//   const [allPermissions, setAllPermissions] = useState([]);
-//   const [allRoles, setAllRoles] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   // Fetch permissions and roles
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         setLoading(true);
-//         const permRes = await axios.get("/api/permissions");
-//         const rolesRes = await axios.get("/api/roles");
-
-//         setAllPermissions(Array.isArray(permRes.data) ? permRes.data : []);
-//         setAllRoles(Array.isArray(rolesRes.data) ? rolesRes.data : []);
-
-//         if (roleId) {
-//           const roleRes = await axios.get(`/api/roles/${roleId}`);
-//           setRole(roleRes.data);
-//         }
-//       } catch (err) {
-//         console.error("Error fetching data:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchData();
-//   }, [roleId]);
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked, options } = e.target;
-
-//     if (type === "checkbox") {
-//       setRole((prev) => ({ ...prev, [name]: checked }));
-//     } else if (type === "select-multiple") {
-//       const selected = Array.from(options)
-//         .filter((opt) => opt.selected)
-//         .map((opt) => opt.value);
-//       setRole((prev) => ({ ...prev, [name]: selected }));
-//     } else {
-//       setRole((prev) => ({ ...prev, [name]: value }));
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//       if (roleId) {
-//         await axios.put(`/api/roles/${roleId}`, role);
-//         alert("Role updated successfully!");
-//       } else {
-//         await axios.post("/api/roles", role);
-//         alert("Role created successfully!");
-//         setRole({
-//           name: "",
-//           description: "",
-//           permissions: [],
-//           inherits: [],
-//           isSystem: false,
-//         });
-//       }
-//     } catch (err) {
-//       console.error("Error saving role:", err);
-//       alert("Error saving role!");
-//     }
-//   };
-
-//   if (loading) return <div className="text-center mt-10">Loading...</div>;
-
-//   return (
-//     <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10">
-//       <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-//         {roleId ? "Edit Role" : "Add New Role"}
-//       </h2>
-//       <form onSubmit={handleSubmit} className="space-y-5">
-//         {/* Role Name */}
-//         <div>
-//           <label className="block text-gray-700 font-medium mb-1">
-//             Role Name <span className="text-red-500">*</span>
-//           </label>
-//           <input
-//             type="text"
-//             name="name"
-//             value={role.name}
-//             onChange={handleChange}
-//             required
-//             className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-
-//         {/* Description */}
-//         <div>
-//           <label className="block text-gray-700 font-medium mb-1">
-//             Description
-//           </label>
-//           <textarea
-//             name="description"
-//             value={role.description}
-//             onChange={handleChange}
-//             rows={3}
-//             className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           />
-//         </div>
-
-//         {/* Permissions */}
-//         <div>
-//           <label className="block text-gray-700 font-medium mb-1">
-//             Permissions
-//           </label>
-//           <select
-//             multiple
-//             name="permissions"
-//             value={role.permissions}
-//             onChange={handleChange}
-//             className="w-full border border-gray-300 rounded-lg p-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           >
-//             {Array.isArray(allPermissions) &&
-//               allPermissions.map((p) => (
-//                 <option key={p._id} value={p._id}>
-//                   {p.name}
-//                 </option>
-//               ))}
-//           </select>
-//         </div>
-
-//         {/* Inherits */}
-//         <div>
-//           <label className="block text-gray-700 font-medium mb-1">
-//             Inherits From Roles
-//           </label>
-//           <select
-//             multiple
-//             name="inherits"
-//             value={role.inherits}
-//             onChange={handleChange}
-//             className="w-full border border-gray-300 rounded-lg p-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//           >
-//             {Array.isArray(allRoles) &&
-//               allRoles
-//                 .filter((r) => r._id !== roleId)
-//                 .map((r) => (
-//                   <option key={r._id} value={r._id}>
-//                     {r.name}
-//                   </option>
-//                 ))}
-//           </select>
-//         </div>
-
-//         {/* System Role */}
-//         <div className="flex items-center gap-2">
-//           <input
-//             type="checkbox"
-//             name="isSystem"
-//             checked={role.isSystem}
-//             onChange={handleChange}
-//             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-//           />
-//           <label className="text-gray-700 font-medium">System Role</label>
-//         </div>
-
-//         {/* Submit Button */}
-//         <div>
-//           <button
-//             type="submit"
-//             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
-//           >
-//             {roleId ? "Update Role" : "Create Role"}
-//           </button>
-//         </div>
-//       </form>
-//     </div>
-//   );
-// }
-
-
-
-// AddRoles.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function AddRoles() {
-  const [role, setRole] = useState({
+  const { id } = useParams(); // For editing
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
     name: "",
     description: "",
     permissions: [],
@@ -199,81 +14,121 @@ export default function AddRoles() {
     isSystem: false,
   });
 
-  const [allPermissions, setAllPermissions] = useState([]);
-  const [allRoles, setAllRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [permissionsList, setPermissionsList] = useState([]);
+  const [rolesList, setRolesList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Fetch permissions and roles
+  // Fetch all permissions and roles
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        const permRes = await axios.get("/api/permissions");
-        const rolesRes = await axios.get("/api/role");
+        const [permRes, roleRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/permission"),
+          axios.get("http://localhost:5000/api/role"),
+        ]);
 
-        setAllPermissions(Array.isArray(permRes.data) ? permRes.data : []);
-        setAllRoles(Array.isArray(rolesRes.data) ? rolesRes.data : []);
+        setPermissionsList(Array.isArray(permRes.data) ? permRes.data : permRes.data?.data || []);
+        setRolesList(Array.isArray(roleRes.data) ? roleRes.data : roleRes.data?.data || []);
       } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
+        console.error("❌ Error fetching data:", err);
       }
     };
+
     fetchData();
   }, []);
 
+  // Fetch role data if editing
+  useEffect(() => {
+    if (!id) return;
+    const fetchRole = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/role/${id}`);
+        const data = res.data.data || res.data;
+
+        setFormData({
+          name: data.name || "",
+          description: data.description || "",
+          permissions: data.permissions || [],
+          inherits: data.inherits || [],
+          isSystem: data.isSystem || false,
+        });
+      } catch (err) {
+        console.error("❌ Error fetching role:", err);
+      }
+    };
+
+    fetchRole();
+  }, [id]);
+
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value, type, checked, options } = e.target;
-
     if (type === "checkbox") {
-      setRole((prev) => ({ ...prev, [name]: checked }));
+      setFormData((prev) => ({ ...prev, [name]: checked }));
     } else if (type === "select-multiple") {
       const selected = Array.from(options)
         .filter((opt) => opt.selected)
         .map((opt) => opt.value);
-      setRole((prev) => ({ ...prev, [name]: selected }));
+      setFormData((prev) => ({ ...prev, [name]: selected }));
     } else {
-      setRole((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
     try {
-      // POST request to your specific route
-await axios.post("/api/role", role);
-      alert("Role created successfully!");
-      setRole({
-        name: "",
-        description: "",
-        permissions: [],
-        inherits: [],
-        isSystem: false,
-      });
+      if (id) {
+        await axios.put(`http://localhost:5000/api/role/${id}`, formData);
+        setMessage("✅ Role updated successfully!");
+      } else {
+        await axios.post("http://localhost:5000/api/role", formData);
+        setMessage("✅ Role added successfully!");
+        setFormData({ name: "", description: "", permissions: [], inherits: [], isSystem: false });
+      }
+
+      setTimeout(() => navigate("/role"), 1000);
     } catch (err) {
-      console.error("Error saving role:", err);
-      alert("Error saving role!");
+      console.error("❌ Error saving role:", err);
+      setMessage("❌ Error saving role. Name might be duplicate.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <div className="text-center mt-10">Loading...</div>;
-
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Add New Role</h2>
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+        {id ? "Edit Role" : "Add Role"}
+      </h2>
+
+      {message && (
+        <div
+          className={`mb-4 p-3 rounded-md text-center text-white ${
+            message.startsWith("✅") ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {message}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Role Name */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">
-            Role Name <span className="text-red-500">*</span>
-          </label>
+          <label className="block text-gray-700 font-medium mb-1">Role Name *</label>
           <input
             type="text"
             name="name"
-            value={role.name}
+            value={formData.name}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter role name"
+            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
 
@@ -282,10 +137,10 @@ await axios.post("/api/role", role);
           <label className="block text-gray-700 font-medium mb-1">Description</label>
           <textarea
             name="description"
-            value={role.description}
+            value={formData.description}
             onChange={handleChange}
-            rows={3}
-            className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter description"
+            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
 
@@ -293,13 +148,13 @@ await axios.post("/api/role", role);
         <div>
           <label className="block text-gray-700 font-medium mb-1">Permissions</label>
           <select
-            multiple
             name="permissions"
-            value={role.permissions}
+            value={formData.permissions}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            multiple
+            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
-            {allPermissions.map((p) => (
+            {permissionsList.map((p) => (
               <option key={p._id} value={p._id}>
                 {p.name}
               </option>
@@ -307,17 +162,17 @@ await axios.post("/api/role", role);
           </select>
         </div>
 
-        {/* Inherits */}
+        {/* Inherited Roles */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Inherits From Roles</label>
+          <label className="block text-gray-700 font-medium mb-1">Inherits Roles</label>
           <select
-            multiple
             name="inherits"
-            value={role.inherits}
+            value={formData.inherits}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            multiple
+            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
-            {allRoles.map((r) => (
+            {rolesList.filter((r) => r._id !== id).map((r) => (
               <option key={r._id} value={r._id}>
                 {r.name}
               </option>
@@ -326,26 +181,25 @@ await axios.post("/api/role", role);
         </div>
 
         {/* System Role */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-2">
           <input
             type="checkbox"
             name="isSystem"
-            checked={role.isSystem}
+            checked={formData.isSystem}
             onChange={handleChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
           />
           <label className="text-gray-700 font-medium">System Role</label>
         </div>
 
-        {/* Submit Button */}
-        <div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
-          >
-            Create Role
-          </button>
-        </div>
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-50"
+        >
+          {loading ? "Saving..." : id ? "Update Role" : "Add Role"}
+        </button>
       </form>
     </div>
   );

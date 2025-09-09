@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function AddVisaPurpose() {
@@ -10,12 +9,35 @@ export default function AddVisaPurpose() {
     description: "",
     isActive: true,
   });
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const navigate = useNavigate(); // ✅ React Router navigation
+  const navigate = useNavigate();
+  const { id } = useParams(); // ✅ for edit mode
 
-  // Handle input change
+  // Fetch existing Visa Purpose if editing
+  const fetchVisaPurpose = async () => {
+    if (!id) return;
+    try {
+      const res = await axios.get(`http://localhost:5000/api/visapurpose/${id}`);
+      const data = res.data?.data || res.data;
+      if (data) {
+        setFormData({
+          key: data.key || "",
+          name: data.name || "",
+          description: data.description || "",
+          isActive: data.isActive !== undefined ? data.isActive : true,
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error fetching Visa Purpose:", err);
+      setMessage("❌ Failed to load data for editing.");
+    }
+  };
+
+  useEffect(() => {
+    fetchVisaPurpose();
+  }, [id]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -24,24 +46,27 @@ export default function AddVisaPurpose() {
     }));
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      await axios.post("http://localhost:5000/api/visapurpose", formData);
-      setMessage("✅ Visa Purpose added successfully!");
-      setFormData({ key: "", name: "", description: "", isActive: true });
+      if (id) {
+        // ✅ Edit existing Visa Purpose
+        await axios.put(`http://localhost:5000/api/visapurpose/${id}`, formData);
+        setMessage("✅ Visa Purpose updated successfully!");
+      } else {
+        // ✅ Add new Visa Purpose
+        await axios.post("http://localhost:5000/api/visapurpose", formData);
+        setMessage("✅ Visa Purpose added successfully!");
+        setFormData({ key: "", name: "", description: "", isActive: true });
+      }
 
-      // ✅ Navigate to list page after 1.5 sec
-      setTimeout(() => {
-        navigate("/visaPurpose"); // change path as per your routes
-      }, 150);
+      setTimeout(() => navigate("/visaPurpose"), 1000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error: Could not save Visa Purpose. Key might be duplicate.");
+      setMessage("❌ Error saving Visa Purpose. Key might be duplicate.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +75,7 @@ export default function AddVisaPurpose() {
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-        Add Visa Purpose
+        {id ? "Edit Visa Purpose" : "Add Visa Purpose"}
       </h2>
 
       {message && (
@@ -121,10 +146,9 @@ export default function AddVisaPurpose() {
           disabled={loading}
           className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Add Visa Purpose"}
+          {loading ? "Saving..." : id ? "Update Visa Purpose" : "Add Visa Purpose"}
         </button>
       </form>
     </div>
   );
 }
-

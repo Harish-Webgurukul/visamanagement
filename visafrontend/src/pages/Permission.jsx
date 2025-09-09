@@ -4,40 +4,32 @@ import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
-export default function ShareLinks() {
-  const [links, setLinks] = useState([]);
-  const [, setVisaOptions] = useState([]);
+export default function Permission() {
+  const [permissions, setPermissions] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch share links and visa options
-  const fetchData = async () => {
+  // Fetch permissions
+  const fetchPermissions = async () => {
     try {
-      const [linksRes, visaRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/sharelink"),
-        axios.get("http://localhost:5000/api/visaoption")
-      ]);
-
-      setLinks(Array.isArray(linksRes.data) ? linksRes.data : linksRes.data?.data || []);
-      setVisaOptions(Array.isArray(visaRes.data) ? visaRes.data : visaRes.data?.data || []);
+      const res = await axios.get("http://localhost:5000/api/permission");
+      setPermissions(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
-      console.error("❌ Error fetching data:", err);
-      setLinks([]);
-      setVisaOptions([]);
+      console.error("❌ Error fetching permissions:", err);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchPermissions();
   }, []);
 
-  // Delete share link
+  // Delete permission
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this share link?")) {
+    if (window.confirm("Are you sure you want to delete this permission?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/sharelink/${id}`);
-        fetchData();
+        await axios.delete(`http://localhost:5000/api/permission/${id}`);
+        fetchPermissions();
       } catch (err) {
-        console.error("❌ Error deleting share link:", err);
+        console.error("❌ Error deleting permission:", err);
       }
     }
   };
@@ -47,14 +39,14 @@ export default function ShareLinks() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Share Links</h1>
-          <p className="text-sm text-gray-500">Manage all visa share links in one place.</p>
+          <h1 className="text-2xl font-bold text-gray-800">Permissions</h1>
+          <p className="text-sm text-gray-500">Manage all permissions in the system.</p>
         </div>
         <button
-          onClick={() => navigate("/add-sharelink")}
+          onClick={() => navigate("/add-permission")}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
-          ➕ Add Share Link
+          ➕ Add Permission
         </button>
       </div>
 
@@ -63,40 +55,22 @@ export default function ShareLinks() {
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
             <tr>
-              <th className="p-3 text-left">Visa Option</th>
-              <th className="p-3 text-left">Token</th>
-              <th className="p-3 text-left">Clicks</th>
-              <th className="p-3 text-left">Expires At</th>
-              <th className="p-3 text-left">One-Time</th>
+              <th className="p-3 text-left">Key</th>
+              <th className="p-3 text-left">Name</th>
+              <th className="p-3 text-left">Description</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {links.length > 0 ? (
-              links.map((link, index) => (
+            {permissions.length > 0 ? (
+              permissions.map((perm, index) => (
                 <tr
-                  key={link._id}
+                  key={perm._id}
                   className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                 >
-                  <td className="p-3 font-medium text-gray-700">
-                    {link.visaOption?.title || "-"}
-                  </td>
-                  <td className="p-3 text-gray-600">{link.token}</td>
-                  <td className="p-3 text-gray-600">{link.clicks}</td>
-                  <td className="p-3 text-gray-600">
-                    {link.expiresAt ? new Date(link.expiresAt).toLocaleDateString() : "-"}
-                  </td>
-                  <td className="p-3 text-center">
-                    {link.isOneTime ? (
-                      <span className="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">
-                        Yes
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">
-                        No
-                      </span>
-                    )}
-                  </td>
+                  <td className="p-3 font-medium text-gray-700">{perm.key}</td>
+                  <td className="p-3 text-gray-600">{perm.name}</td>
+                  <td className="p-3 text-gray-600">{perm.description || "-"}</td>
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
                       <Menu.Button className="inline-flex justify-center w-full p-1 text-gray-500 hover:text-gray-700">
@@ -116,7 +90,7 @@ export default function ShareLinks() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-sharelink/${link._id}`)}
+                                  onClick={() => navigate(`/add-permission/${perm._id}`)}
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   Edit
@@ -126,7 +100,7 @@ export default function ShareLinks() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => handleDelete(link._id)}
+                                  onClick={() => handleDelete(perm._id)}
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
@@ -142,8 +116,8 @@ export default function ShareLinks() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="p-6 text-center text-gray-500 italic">
-                  No share links found 🚫
+                <td colSpan="4" className="p-6 text-center text-gray-500 italic">
+                  No permissions found 🚫
                 </td>
               </tr>
             )}

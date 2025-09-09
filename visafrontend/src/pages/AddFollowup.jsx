@@ -19,24 +19,32 @@ export default function AddFollowup() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch all enquiries
         const resEnq = await axios.get("http://localhost:5000/api/enquiry");
-        if (Array.isArray(resEnq.data)) setEnquiries(resEnq.data);
+        if (resEnq.data?.data && Array.isArray(resEnq.data.data)) {
+          setEnquiries(resEnq.data.data);
+        }
 
+        // Fetch all documents
         const resDocs = await axios.get("http://localhost:5000/api/document");
-        if (Array.isArray(resDocs.data)) setDocuments(resDocs.data);
+        if (resDocs.data?.data && Array.isArray(resDocs.data.data)) {
+          setDocuments(resDocs.data.data);
+        }
 
+        // If edit mode, fetch followup by ID
         if (id) {
           const res = await axios.get(`http://localhost:5000/api/followup/${id}`);
-          if (res.data) {
+          if (res.data?.data) {
+            const f = res.data.data;
             setFormData({
-              enquiry: res.data.enquiry || "",
-              type: res.data.type || "call",
-              message: res.data.message || "",
-              result: res.data.result || "",
-              nextFollowupAt: res.data.nextFollowupAt
-                ? new Date(res.data.nextFollowupAt).toISOString().slice(0, 16)
+              enquiry: f.enquiry?._id || f.enquiry || "",
+              type: f.type || "call",
+              message: f.message || "",
+              result: f.result || "",
+              nextFollowupAt: f.nextFollowupAt
+                ? new Date(f.nextFollowupAt).toISOString().slice(0, 16)
                 : "",
-              attachedDocs: res.data.attachedDocs || [],
+              attachedDocs: f.attachedDocs?.map((d) => d._id) || [],
             });
           }
         }

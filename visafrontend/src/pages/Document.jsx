@@ -98,7 +98,7 @@ export default function Document() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-document/${doc._id}`)}
+                                  onClick={() => navigate(`/add-dacument/${doc._id}`)}
                                   className={`${
                                     active ? "bg-gray-100" : ""
                                   } w-full text-left px-4 py-2 text-sm text-gray-700`}

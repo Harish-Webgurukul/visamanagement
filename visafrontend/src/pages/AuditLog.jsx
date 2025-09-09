@@ -4,49 +4,37 @@ import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
-export default function Role() {
-  const [roles, setRoles] = useState([]);
-  const navigate = useNavigate();
+export default function AuditLog() {
+  const [logs, setLogs] = useState([]);
+  const navigate = useNavigate(); // <-- Added
 
-  // Fetch roles
-  const fetchRoles = async () => {
+  // Fetch audit logs
+  const fetchLogs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/role");
-      setRoles(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      const res = await axios.get("http://localhost:5000/api/auditlog"); // Update URL if needed
+      setLogs(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
-      console.error("❌ Error fetching roles:", err);
+      console.error("❌ Error fetching audit logs:", err);
     }
   };
 
   useEffect(() => {
-    fetchRoles();
+    fetchLogs();
   }, []);
 
-  // Delete role
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this role?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/role/${id}`);
-        fetchRoles();
-      } catch (err) {
-        console.error("❌ Error deleting role:", err);
-      }
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Roles</h1>
-          <p className="text-sm text-gray-500">Manage all roles and permissions.</p>
+          <h1 className="text-2xl font-bold text-gray-800">Audit Logs</h1>
+          <p className="text-sm text-gray-500">Track all actions performed in the system.</p>
         </div>
         <button
-          onClick={() => navigate("/add-role")}
+          onClick={() => navigate("/add-auditLog")} // <-- Navigate to Add Audit Log page
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
-          ➕ Add Role
+          ➕ Add Audit Log
         </button>
       </div>
 
@@ -55,28 +43,28 @@ export default function Role() {
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
             <tr>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Description</th>
-              <th className="p-3 text-left">Permissions</th>
-              <th className="p-3 text-left">Inherited Roles</th>
+              <th className="p-3 text-left">Action</th>
+              <th className="p-3 text-left">Performed By</th>
+              <th className="p-3 text-left">IP</th>
+              <th className="p-3 text-left">User Agent</th>
+              <th className="p-3 text-left">Target</th>
+              <th className="p-3 text-left">Timestamp</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {roles.length > 0 ? (
-              roles.map((role, index) => (
+            {logs.length > 0 ? (
+              logs.map((log, index) => (
                 <tr
-                  key={role._id}
+                  key={log._id}
                   className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                 >
-                  <td className="p-3 font-medium text-gray-700">{role.name}</td>
-                  <td className="p-3 text-gray-600">{role.description || "-"}</td>
-                  <td className="p-3 text-gray-600">
-                    {role.permissions?.length > 0 ? role.permissions.join(", ") : "-"}
-                  </td>
-                  <td className="p-3 text-gray-600">
-                    {role.inherits?.length > 0 ? role.inherits.join(", ") : "-"}
-                  </td>
+                  <td className="p-3 font-medium text-gray-700">{log.action}</td>
+                  <td className="p-3 text-gray-600">{log.performedBy || "-"}</td>
+                  <td className="p-3 text-gray-600">{log.ip || "-"}</td>
+                  <td className="p-3 text-gray-600 truncate max-w-xs">{log.userAgent || "-"}</td>
+                  <td className="p-3 text-gray-600">{log.target?.kind || "-"}</td>
+                  <td className="p-3 text-gray-600">{new Date(log.createdAt).toLocaleString()}</td>
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
                       <Menu.Button className="inline-flex justify-center w-full p-1 text-gray-500 hover:text-gray-700">
@@ -96,20 +84,10 @@ export default function Role() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-role/${role._id}`)}
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  onClick={() => alert(JSON.stringify(log, null, 2))}
                                 >
-                                  Edit
-                                </button>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  onClick={() => handleDelete(role._id)}
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
-                                >
-                                  Delete
+                                  View Details
                                 </button>
                               )}
                             </Menu.Item>
@@ -122,8 +100,8 @@ export default function Role() {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-500 italic">
-                  No roles found 🚫
+                <td colSpan="7" className="p-6 text-center text-gray-500 italic">
+                  No audit logs found 🚫
                 </td>
               </tr>
             )}

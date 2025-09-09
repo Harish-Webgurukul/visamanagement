@@ -12,7 +12,7 @@ export default function VisaOption() {
   // Fetch visa options
   const fetchVisaOptions = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/visa-option"); // Update backend URL if needed
+      const res = await axios.get("http://localhost:5000/api/visaoption"); // Update backend URL if needed
       if (Array.isArray(res.data)) setVisaOptions(res.data);
       else if (res.data.data && Array.isArray(res.data.data)) setVisaOptions(res.data.data);
       else setVisaOptions([]);
@@ -29,7 +29,7 @@ export default function VisaOption() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this visa option?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/visa-option/${id}`);
+        await axios.delete(`http://localhost:5000/api/visaoption/${id}`);
         fetchVisaOptions();
       } catch (err) {
         console.error("❌ Error deleting visa option:", err);
@@ -101,7 +101,7 @@ export default function VisaOption() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-visa-option/${v._id}`)}
+                                  onClick={() => navigate(`/add-visaoption/${v._id}`)}
                                   className={`${
                                     active ? "bg-gray-100" : ""
                                   } w-full text-left px-4 py-2 text-sm text-gray-700`}

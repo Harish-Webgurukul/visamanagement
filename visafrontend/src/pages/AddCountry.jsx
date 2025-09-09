@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function AddCountry() {
@@ -10,38 +11,67 @@ export default function AddCountry() {
     defaultCurrency: "",
     meta: ""
   });
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+  // Fetch country for edit mode
+  const fetchCountry = async () => {
+    if (!id) return;
+    try {
+      const res = await axios.get(`http://localhost:5000/api/country/${id}`);
+      const country = res.data?.data || res.data; // handle nested data
+
+      if (country) {
+        setFormData({
+          name: country.name || "",
+          iso2: country.iso2 || "",
+          iso3: country.iso3 || "",
+          flagUrl: country.flagUrl || "",
+          defaultCurrency: country.defaultCurrency || "",
+          meta: country.meta ? JSON.stringify(country.meta) : ""
+        });
+      }
+    } catch (err) {
+      console.error("❌ Error fetching country:", err);
+      setMessage("❌ Failed to load country data.");
+    }
   };
 
-  // Handle form submit
+  useEffect(() => {
+    fetchCountry();
+  }, [id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      // Convert meta string to JSON if provided
       const payload = {
         ...formData,
         meta: formData.meta ? JSON.parse(formData.meta) : {}
       };
 
-      const response = await axios.post("/api/country", payload); // Update endpoint if needed
-      setMessage("Country added successfully!");
-      setFormData({ name: "", iso2: "", iso3: "", flagUrl: "", defaultCurrency: "", meta: "" });
-    } catch (error) {
-      console.error(error);
-      setMessage("Error adding country. Make sure 'meta' is valid JSON.");
+      if (id) {
+        await axios.put(`http://localhost:5000/api/country/${id}`, payload);
+        setMessage("✅ Country updated successfully!");
+      } else {
+        await axios.post("http://localhost:5000/api/country", payload);
+        setMessage("✅ Country added successfully!");
+        setFormData({ name: "", iso2: "", iso3: "", flagUrl: "", defaultCurrency: "", meta: "" });
+      }
+
+      setTimeout(() => navigate("/country"), 1000);
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Error saving country. Check your 'meta' JSON.");
     } finally {
       setLoading(false);
     }
@@ -49,67 +79,32 @@ export default function AddCountry() {
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-md mt-10">
-      <h2 className="text-2xl font-bold mb-6">Add Country</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        {id ? "Edit Country" : "Add Country"}
+      </h2>
+
       {message && (
-        <div className="mb-4 p-3 rounded-md text-white bg-blue-500">{message}</div>
+        <div className={`mb-4 p-3 rounded-md text-center text-white ${message.startsWith("✅") ? "bg-green-500" : "bg-red-500"}`}>
+          {message}
+        </div>
       )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block font-medium mb-1">Name *</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+        {["name", "iso2", "iso3", "flagUrl", "defaultCurrency"].map((field) => (
+          <div key={field}>
+            <label className="block font-medium mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+            <input
+              type="text"
+              name={field}
+              value={formData[field]}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required={field === "name"}
+            />
+          </div>
+        ))}
 
-        <div>
-          <label className="block font-medium mb-1">ISO2</label>
-          <input
-            type="text"
-            name="iso2"
-            value={formData.iso2}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">ISO3</label>
-          <input
-            type="text"
-            name="iso3"
-            value={formData.iso3}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Flag URL</label>
-          <input
-            type="text"
-            name="flagUrl"
-            value={formData.flagUrl}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Default Currency</label>
-          <input
-            type="text"
-            name="defaultCurrency"
-            value={formData.defaultCurrency}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
-
+        {/* Meta */}
         <div>
           <label className="block font-medium mb-1">Meta (JSON)</label>
           <textarea
@@ -118,15 +113,15 @@ export default function AddCountry() {
             onChange={handleChange}
             placeholder='e.g. {"population": 1000000}'
             className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          ></textarea>
+          />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-500 text-white font-medium p-2 rounded-md hover:bg-blue-600 transition"
+          className="w-full bg-blue-500 text-white font-medium p-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Add Country"}
+          {loading ? "Saving..." : id ? "Update Country" : "Add Country"}
         </button>
       </form>
     </div>
