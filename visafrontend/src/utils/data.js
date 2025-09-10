@@ -16,7 +16,7 @@ import {
   BellIcon,             // For notifications
   ShieldCheckIcon,      // For audit log / security
   IdentificationIcon,   // For customer docs
-  BriefcaseIcon         // For visa purposes/options
+  BriefcaseIcon         
 } from "@heroicons/react/24/outline";
 
 export const SIDE_MENU_ADMIN_DATA = [
