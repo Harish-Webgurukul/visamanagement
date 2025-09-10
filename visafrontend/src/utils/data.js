@@ -1,7 +1,7 @@
 
 
 import {
-  ChartBarSquareIcon,   // For reports / analytics
+  ChartBarSquareIcon,   
   Cog6ToothIcon,        // For settings
   FolderIcon,           // For dashboard
   GlobeAltIcon,         // For countries
