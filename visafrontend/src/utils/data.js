@@ -21,7 +21,8 @@ import {
 
 export const SIDE_MENU_ADMIN_DATA = [
   { name: "Dashboard", href: "/dashboard", icon: FolderIcon, current: true },
-  // { name: "Enquiry", href: "/enquiry", icon: UsersIcon, current: false },
+  { name: "User", href: "/user", icon: FolderIcon, current: true },
+  { name: "Enquiry", href: "/enquiry", icon: UsersIcon, current: false },
   { name: "Role", href: "/role", icon: ServerIcon, current: false },
   { name: "Permission", href: "/permission", icon: SignalIcon, current: false },
   {
@@ -48,12 +49,12 @@ export const SIDE_MENU_ADMIN_DATA = [
     icon: DocumentTextIcon,
     current: false,
   },
-  {
-    name: "Enquiry",
-    href: "/enquiry",
-    icon: QuestionMarkCircleIcon,
-    current: false,
-  },
+  // {
+  //   name: "Enquiry",
+  //   href: "/enquiry",
+  //   icon: QuestionMarkCircleIcon,
+  //   current: false,
+  // },
   {
     name: "Follow Up",
     href: "/followup",
@@ -84,4 +85,19 @@ export const SIDE_MENU_ADMIN_DATA = [
     icon: ShieldCheckIcon,
     current: false,
   },
+
+
+
+  //  {
+  //   name: "Master",
+  //   href: "/master",
+  //   icon: UsersIcon,
+  //   current: false,
+  //   children: [
+  //     { name: "User", href: "#" },
+  //     { name: "Roles and Permission", href: "#" },
+  //     { name: "Customer Success", href: "#" },
+  //   ],
+  // },
+
 ];

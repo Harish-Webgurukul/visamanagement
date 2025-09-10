@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db'); // MongoDB connection file
 const routes = require('./routes/index'); // Combined index routes
 const swaggerRoutes = require('./swagger/index'); // Swagger documentation
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,9 @@ connectDB();
 // Middlewares
 app.use(cors());               // Enable CORS
 app.use(express.json());       // Parse JSON body
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Base API route
 app.use('/api', routes);

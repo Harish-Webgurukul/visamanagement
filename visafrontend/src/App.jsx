@@ -15,7 +15,7 @@ import UserProvider, { UserContext } from "./context/userContext";
 import Login from "./pages/Auth/Login";
 import NotFound from "./pages/NotFound";
 import Refferal from "./pages/Refferal";
-import User from "./pages/Enquiry";
+// import User from "./pages/Enquiry";
 import AddEnquiry from "./pages/AddEnquiry";
 import Role from "./pages/Role";
 import AddRoles from "./pages/AddRoles";
@@ -24,7 +24,7 @@ import AddCountry from "./pages/AddCountry";
 import Country from "./pages/Country";
 import AddVisaPurpose from "./pages/AddVisaPurpose";
 import VisaPurpose from "./pages/VisaPurpose";
-import AddVisaOption from "../AddVisaOption";
+import AddVisaOption from "./pages/AddVisaOption";
 import VisaOption from "./pages/VisaOption";
 import AddDocument from "./pages/AddDocument";
 import Document from "./pages/Document";
@@ -40,6 +40,8 @@ import AuditLog from "./pages/AuditLog";
 import AddAuditLog from "./pages/AddAuditLog";
 import Permission from "./pages/Permission";
 import AddPermission from "./pages/AddPermission";
+import User from "./pages/User";
+import AddUser from "./pages/AddUser";
 
 
 const App = () => {
@@ -52,6 +54,9 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route path="/user" element={<User />} />
+            <Route path="/user/add" element={<AddUser />} />
 
               <Route path="/permission" element={<Permission />} />
               <Route path="/add-permission" element={<AddPermission />} />
