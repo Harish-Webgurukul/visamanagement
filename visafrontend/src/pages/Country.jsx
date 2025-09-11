@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Country() {
   const [countries, setCountries] = useState([]);
@@ -11,12 +13,13 @@ export default function Country() {
   // Fetch countries
   const fetchCountries = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/country"); // Update backend URL if needed
+      const res = await axios.get("http://localhost:5000/api/country");
       if (Array.isArray(res.data)) setCountries(res.data);
       else if (res.data.data && Array.isArray(res.data.data)) setCountries(res.data.data);
       else setCountries([]);
     } catch (err) {
       console.error("❌ Error fetching countries:", err);
+      toast.error("Failed to fetch countries ❌");
     }
   };
 
@@ -29,15 +32,20 @@ export default function Country() {
     if (window.confirm("Are you sure you want to delete this country?")) {
       try {
         await axios.delete(`http://localhost:5000/api/country/${id}`);
+        toast.success("Country deleted successfully ✅");
         fetchCountries();
       } catch (err) {
         console.error("❌ Error deleting country:", err);
+        toast.error("Failed to delete country ❌");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

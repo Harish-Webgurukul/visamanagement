@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Notification() {
   const [notifications, setNotifications] = useState([]);
@@ -16,6 +17,7 @@ export default function Notification() {
       setNotifications(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
       console.error("❌ Error fetching notifications:", err);
+      toast.error("❌ Failed to fetch notifications");
     }
   };
 
@@ -28,15 +30,20 @@ export default function Notification() {
     if (window.confirm("Are you sure you want to delete this notification?")) {
       try {
         await axios.delete(`http://localhost:5000/api/notification/${id}`);
+        toast.success("✅ Notification deleted successfully!");
         fetchNotifications();
       } catch (err) {
         console.error("❌ Error deleting notification:", err);
+        toast.error("❌ Failed to delete notification");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -75,9 +82,11 @@ export default function Notification() {
                   <td className="p-3 font-medium text-gray-700">{n.title || "-"}</td>
                   <td className="p-3 text-gray-600">{n.type}</td>
                   <td className="p-3 text-gray-600">
-                    {n.toUser ? `User ID: ${n.toUser}` : `${n.toContact?.email || "-"} / ${n.toContact?.mobile || "-"}`}
+                    {n.toUser
+                      ? `User ID: ${n.toUser}`
+                      : `${n.toContact?.email || "-"} / ${n.toContact?.mobile || "-"}`}
                   </td>
-                  <td>
+                  <td className="p-3 text-center">
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${
                         n.status === "queued"

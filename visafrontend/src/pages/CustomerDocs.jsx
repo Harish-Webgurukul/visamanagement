@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function CustomerDocs() {
   const [docs, setDocs] = useState([]);
@@ -11,11 +13,12 @@ export default function CustomerDocs() {
   // Fetch documents
   const fetchDocs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/customer-doc");
+      const res = await axios.get("http://localhost:5000/api/customerdoc");
       setDocs(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
       console.error("❌ Error fetching customer documents:", err);
       setDocs([]);
+      toast.error("❌ Failed to fetch customer documents");
     }
   };
 
@@ -27,16 +30,21 @@ export default function CustomerDocs() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this document?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/customer-doc/${id}`);
+        await axios.delete(`http://localhost:5000/api/customerdoc/${id}`);
+        toast.success("✅ Document deleted successfully!");
         fetchDocs();
       } catch (err) {
         console.error("❌ Error deleting document:", err);
+        toast.error("❌ Failed to delete document");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

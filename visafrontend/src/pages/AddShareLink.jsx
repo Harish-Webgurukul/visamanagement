@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddShareLink() {
   const [formData, setFormData] = useState({
@@ -11,7 +13,6 @@ export default function AddShareLink() {
   });
   const [loading, setLoading] = useState(false);
   const [visaOptions, setVisaOptions] = useState([]);
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -19,11 +20,11 @@ export default function AddShareLink() {
   const fetchVisaOptions = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/visaoption");
-      // Support both res.data = array OR res.data.data = array
       const options = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setVisaOptions(options);
     } catch (err) {
       console.error("❌ Error fetching visa options:", err);
+      toast.error("❌ Failed to fetch visa options");
       setVisaOptions([]);
     }
   };
@@ -33,7 +34,7 @@ export default function AddShareLink() {
     if (!id) return;
     try {
       const res = await axios.get(`http://localhost:5000/api/sharelink/${id}`);
-      const data = res.data?.data || res.data; // support both formats
+      const data = res.data?.data || res.data;
       if (data) {
         setFormData({
           visaOption: data.visaOption?._id || data.visaOption || "",
@@ -44,10 +45,10 @@ export default function AddShareLink() {
       }
     } catch (err) {
       console.error("❌ Error fetching share link:", err);
+      toast.error("❌ Failed to fetch share link data");
     }
   };
 
-  // Load visa options first, then share link (for edit mode)
   useEffect(() => {
     const loadData = async () => {
       await fetchVisaOptions();
@@ -56,37 +57,34 @@ export default function AddShareLink() {
     loadData();
   }, [id]);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
-  // Auto-generate token
   const generateToken = () => {
     const token = Math.random().toString(36).substr(2, 10).toUpperCase();
     setFormData((prev) => ({ ...prev, token }));
   };
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (id) {
         await axios.put(`http://localhost:5000/api/sharelink/${id}`, formData);
-        setMessage("✅ Share Link updated successfully!");
+        toast.success("✅ Share Link updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/sharelink", formData);
-        setMessage("✅ Share Link added successfully!");
+        toast.success("✅ Share Link added successfully!");
         setFormData({ visaOption: "", token: "", expiresAt: "", isOneTime: false });
       }
+
       setTimeout(() => navigate("/sharelink"), 1000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error saving Share Link. Token might be duplicate.");
+      toast.error("❌ Error saving Share Link. Token might be duplicate.");
     } finally {
       setLoading(false);
     }
@@ -94,15 +92,12 @@ export default function AddShareLink() {
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Share Link" : "Add Share Link"}
       </h2>
-
-      {message && (
-        <div className="mb-4 p-3 rounded-md text-center text-white bg-blue-500">
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Visa Option */}

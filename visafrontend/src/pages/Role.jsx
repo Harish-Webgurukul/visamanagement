@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Role() {
   const [roles, setRoles] = useState([]);
@@ -12,9 +14,12 @@ export default function Role() {
   const fetchRoles = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/role");
-      setRoles(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      // ✅ Corrected: roles are inside res.data.data
+      setRoles(Array.isArray(res.data?.data) ? res.data.data : []);
+      console.log("📌 Roles:", res.data.data); // Debug
     } catch (err) {
       console.error("❌ Error fetching roles:", err);
+      toast.error("Failed to fetch roles ❌");
     }
   };
 
@@ -27,20 +32,27 @@ export default function Role() {
     if (window.confirm("Are you sure you want to delete this role?")) {
       try {
         await axios.delete(`http://localhost:5000/api/role/${id}`);
+        toast.success("✅ Role deleted successfully");
         fetchRoles();
       } catch (err) {
         console.error("❌ Error deleting role:", err);
+        toast.error("❌ Failed to delete role");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Roles</h1>
-          <p className="text-sm text-gray-500">Manage all roles and permissions.</p>
+          <p className="text-sm text-gray-500">
+            Manage all roles and permissions.
+          </p>
         </div>
         <button
           onClick={() => navigate("/add-role")}
@@ -67,16 +79,36 @@ export default function Role() {
               roles.map((role, index) => (
                 <tr
                   key={role._id}
-                  className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-gray-100 transition`}
                 >
-                  <td className="p-3 font-medium text-gray-700">{role.name}</td>
-                  <td className="p-3 text-gray-600">{role.description || "-"}</td>
-                  <td className="p-3 text-gray-600">
-                    {role.permissions?.length > 0 ? role.permissions.join(", ") : "-"}
+                  {/* Name */}
+                  <td className="p-3 font-medium text-gray-700">
+                    {role.name}
                   </td>
+
+                  {/* Description */}
                   <td className="p-3 text-gray-600">
-                    {role.inherits?.length > 0 ? role.inherits.join(", ") : "-"}
+                    {role.description || "-"}
                   </td>
+
+                  {/* Permissions */}
+                  <td className="p-3 text-gray-600">
+                    {Array.isArray(role.permissions) &&
+                    role.permissions.length > 0
+                      ? role.permissions.map((p) => p.name).join(", ")
+                      : "-"}
+                  </td>
+
+                  {/* Inherited Roles */}
+                  <td className="p-3 text-gray-600">
+                    {Array.isArray(role.inherits) && role.inherits.length > 0
+                      ? role.inherits.map((i) => i.name).join(", ")
+                      : "-"}
+                  </td>
+
+                  {/* Actions */}
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
                       <Menu.Button className="inline-flex justify-center w-full p-1 text-gray-500 hover:text-gray-700">
@@ -96,8 +128,12 @@ export default function Role() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-role/${role._id}`)}
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  onClick={() =>
+                                    navigate(`/add-role/${role._id}`)
+                                  }
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   Edit
                                 </button>
@@ -107,7 +143,9 @@ export default function Role() {
                               {({ active }) => (
                                 <button
                                   onClick={() => handleDelete(role._id)}
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
                                 </button>
@@ -122,7 +160,10 @@ export default function Role() {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="p-6 text-center text-gray-500 italic">
+                <td
+                  colSpan="5"
+                  className="p-6 text-center text-gray-500 italic"
+                >
                   No roles found 🚫
                 </td>
               </tr>

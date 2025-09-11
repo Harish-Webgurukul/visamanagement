@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddVisaPurpose() {
   const [formData, setFormData] = useState({
@@ -10,7 +12,6 @@ export default function AddVisaPurpose() {
     isActive: true,
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { id } = useParams(); // ✅ for edit mode
 
@@ -30,7 +31,7 @@ export default function AddVisaPurpose() {
       }
     } catch (err) {
       console.error("❌ Error fetching Visa Purpose:", err);
-      setMessage("❌ Failed to load data for editing.");
+      toast.error("❌ Failed to load data for editing.");
     }
   };
 
@@ -49,24 +50,23 @@ export default function AddVisaPurpose() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (id) {
         // ✅ Edit existing Visa Purpose
         await axios.put(`http://localhost:5000/api/visapurpose/${id}`, formData);
-        setMessage("✅ Visa Purpose updated successfully!");
+        toast.success("✅ Visa Purpose updated successfully!");
       } else {
         // ✅ Add new Visa Purpose
         await axios.post("http://localhost:5000/api/visapurpose", formData);
-        setMessage("✅ Visa Purpose added successfully!");
+        toast.success("✅ Visa Purpose added successfully!");
         setFormData({ key: "", name: "", description: "", isActive: true });
       }
 
       setTimeout(() => navigate("/visaPurpose"), 1000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error saving Visa Purpose. Key might be duplicate.");
+      toast.error("❌ Error saving Visa Purpose. Key might be duplicate.");
     } finally {
       setLoading(false);
     }
@@ -74,15 +74,12 @@ export default function AddVisaPurpose() {
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Visa Purpose" : "Add Visa Purpose"}
       </h2>
-
-      {message && (
-        <div className="mb-4 p-3 rounded-md text-center text-white bg-blue-500">
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Key */}

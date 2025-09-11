@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddFollowup() {
   const [formData, setFormData] = useState({
@@ -50,6 +52,7 @@ export default function AddFollowup() {
         }
       } catch (err) {
         console.error("❌ Error fetching data:", err);
+        toast.error("❌ Failed to fetch followup data");
       }
     };
     fetchData();
@@ -60,9 +63,19 @@ export default function AddFollowup() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleDocsChange = (e) => {
-    const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
-    setFormData({ ...formData, attachedDocs: selected });
+  // Handle checkbox for documents
+  const handleDocsCheckbox = (docId) => {
+    setFormData((prev) => {
+      const attached = [...prev.attachedDocs];
+      if (attached.includes(docId)) {
+        // Remove if already selected
+        return { ...prev, attachedDocs: attached.filter((id) => id !== docId) };
+      } else {
+        // Add if not selected
+        attached.push(docId);
+        return { ...prev, attachedDocs: attached };
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -70,20 +83,23 @@ export default function AddFollowup() {
     try {
       if (id) {
         await axios.put(`http://localhost:5000/api/followup/${id}`, formData);
-        alert("✅ Followup updated successfully!");
+        toast.success("✅ Followup updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/followup", formData);
-        alert("✅ Followup added successfully!");
+        toast.success("✅ Followup added successfully!");
       }
-      navigate("/followup");
+      setTimeout(() => navigate("/followup"), 1500);
     } catch (err) {
       console.error("❌ Error saving followup:", err);
-      alert("Failed to save followup.");
+      toast.error("❌ Failed to save followup");
     }
   };
 
   return (
     <div className="max-w-3xl mx-auto mt-10">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <div className="bg-white shadow-lg rounded-2xl p-8">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">
           {id ? "✏️ Edit Followup" : "➕ Add Followup"}
@@ -176,28 +192,24 @@ export default function AddFollowup() {
             />
           </div>
 
-          {/* Attached Documents */}
+          {/* Attached Documents - checkboxes */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Attach Documents
             </label>
-            <select
-              multiple
-              value={formData.attachedDocs}
-              onChange={handleDocsChange}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            >
-              {documents.map((d) => (
-                <option key={d._id} value={d._id}>
-                  {d.name}
-                </option>
+            <div className="flex flex-col space-y-2">
+              {documents.map((doc) => (
+                <label key={doc._id} className="inline-flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.attachedDocs.includes(doc._id)}
+                    onChange={() => handleDocsCheckbox(doc._id)}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                  <span className="text-gray-700">{doc.name}</span>
+                </label>
               ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Hold <kbd className="px-1 bg-gray-200 rounded">Ctrl</kbd> (or{" "}
-              <kbd className="px-1 bg-gray-200 rounded">Cmd</kbd>) to select
-              multiple.
-            </p>
+            </div>
           </div>
 
           {/* Actions */}

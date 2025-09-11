@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Permission() {
   const [permissions, setPermissions] = useState([]);
@@ -15,6 +17,7 @@ export default function Permission() {
       setPermissions(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
       console.error("❌ Error fetching permissions:", err);
+      toast.error("❌ Failed to fetch permissions!");
     }
   };
 
@@ -27,15 +30,20 @@ export default function Permission() {
     if (window.confirm("Are you sure you want to delete this permission?")) {
       try {
         await axios.delete(`http://localhost:5000/api/permission/${id}`);
+        toast.success("✅ Permission deleted successfully!");
         fetchPermissions();
       } catch (err) {
         console.error("❌ Error deleting permission:", err);
+        toast.error("❌ Failed to delete permission!");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

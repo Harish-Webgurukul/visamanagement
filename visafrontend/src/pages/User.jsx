@@ -1,8 +1,9 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Fragment } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Menu, Transition } from "@headlessui/react";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 
 export default function User() {
   const [users, setUsers] = useState([]);
@@ -74,7 +75,7 @@ export default function User() {
               <th className="hidden lg:table-cell">Mobile</th>
               <th>Role</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -125,20 +126,51 @@ export default function User() {
                     </span>
                   </td>
 
-                  {/* Action Buttons */}
-                  <td className="py-4 pr-4 pl-3 text-right text-sm font-medium sm:pr-0 space-x-2">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                  {/* Actions Dropdown */}
+                  <td className="py-4 pr-4 pl-3 text-center text-sm font-medium sm:pr-0">
+                    <Menu as="div" className="relative inline-block text-left">
+                      <Menu.Button className="inline-flex justify-center w-full p-1 text-gray-500 hover:text-gray-700">
+                        <EllipsisVerticalIcon className="w-5 h-5" />
+                      </Menu.Button>
+                      <Transition
+                        as={Fragment}
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                      >
+                        <Menu.Items className="absolute right-0 mt-2 w-36 origin-top-right bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-10">
+                          <div className="py-1">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-indigo-600`}
+                                  onClick={() => handleEdit(user)}
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-red-600`}
+                                  onClick={() => handleDelete(user._id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </div>
+                        </Menu.Items>
+                      </Transition>
+                    </Menu>
                   </td>
                 </tr>
               ))

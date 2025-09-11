@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddRoles() {
   const { id } = useParams(); // For editing
@@ -17,7 +19,6 @@ export default function AddRoles() {
   const [permissionsList, setPermissionsList] = useState([]);
   const [rolesList, setRolesList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   // Fetch all permissions and roles
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function AddRoles() {
         setRolesList(Array.isArray(roleRes.data) ? roleRes.data : roleRes.data?.data || []);
       } catch (err) {
         console.error("❌ Error fetching data:", err);
+        toast.error("Error fetching permissions/roles");
       }
     };
 
@@ -49,28 +51,35 @@ export default function AddRoles() {
         setFormData({
           name: data.name || "",
           description: data.description || "",
-          permissions: data.permissions || [],
-          inherits: data.inherits || [],
+          permissions: data.permissions?.map((p) => p._id) || [], // only IDs
+          inherits: data.inherits?.map((r) => r._id) || [],       // only IDs
           isSystem: data.isSystem || false,
         });
       } catch (err) {
         console.error("❌ Error fetching role:", err);
+        toast.error("Error fetching role data");
       }
     };
 
     fetchRole();
   }, [id]);
 
-  // Handle form changes
+  // Handle text/checkbox changes
   const handleChange = (e) => {
-    const { name, value, type, checked, options } = e.target;
-    if (type === "checkbox") {
-      setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else if (type === "select-multiple") {
-      const selected = Array.from(options)
-        .filter((opt) => opt.selected)
-        .map((opt) => opt.value);
-      setFormData((prev) => ({ ...prev, [name]: selected }));
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox" && name !== "isSystem") {
+      // For permissions and inherits
+      setFormData((prev) => {
+        const current = prev[name] || [];
+        return {
+          ...prev,
+          [name]: checked
+            ? [...current, value] // add if checked
+            : current.filter((v) => v !== value), // remove if unchecked
+        };
+      });
+    } else if (name === "isSystem") {
+      setFormData((prev) => ({ ...prev, isSystem: checked }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -80,22 +89,21 @@ export default function AddRoles() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (id) {
         await axios.put(`http://localhost:5000/api/role/${id}`, formData);
-        setMessage("✅ Role updated successfully!");
+        toast.success("✅ Role updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/role", formData);
-        setMessage("✅ Role added successfully!");
+        toast.success("✅ Role added successfully!");
         setFormData({ name: "", description: "", permissions: [], inherits: [], isSystem: false });
       }
 
-      setTimeout(() => navigate("/role"), 1000);
+      setTimeout(() => navigate("/role"), 1200);
     } catch (err) {
       console.error("❌ Error saving role:", err);
-      setMessage("❌ Error saving role. Name might be duplicate.");
+      toast.error("❌ Error saving role. Name might be duplicate.");
     } finally {
       setLoading(false);
     }
@@ -106,16 +114,6 @@ export default function AddRoles() {
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Role" : "Add Role"}
       </h2>
-
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded-md text-center text-white ${
-            message.startsWith("✅") ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Role Name */}
@@ -144,40 +142,46 @@ export default function AddRoles() {
           />
         </div>
 
-        {/* Permissions */}
+        {/* Permissions (Checkboxes) */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Permissions</label>
-          <select
-            name="permissions"
-            value={formData.permissions}
-            onChange={handleChange}
-            multiple
-            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
+          <label className="block text-gray-700 font-medium mb-2">Permissions</label>
+          <div className="grid grid-cols-2 gap-2">
             {permissionsList.map((p) => (
-              <option key={p._id} value={p._id}>
-                {p.name}
-              </option>
+              <label key={p._id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="permissions"
+                  value={p._id}
+                  checked={formData.permissions.includes(p._id)}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <span className="text-gray-700">{p.name}</span>
+              </label>
             ))}
-          </select>
+          </div>
         </div>
 
-        {/* Inherited Roles */}
+        {/* Inherits Roles (Checkboxes) */}
         <div>
-          <label className="block text-gray-700 font-medium mb-1">Inherits Roles</label>
-          <select
-            name="inherits"
-            value={formData.inherits}
-            onChange={handleChange}
-            multiple
-            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            {rolesList.filter((r) => r._id !== id).map((r) => (
-              <option key={r._id} value={r._id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
+          <label className="block text-gray-700 font-medium mb-2">Inherits Roles</label>
+          <div className="grid grid-cols-2 gap-2">
+            {rolesList
+              .filter((r) => r._id !== id) // avoid self-reference
+              .map((r) => (
+                <label key={r._id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="inherits"
+                    value={r._id}
+                    checked={formData.inherits.includes(r._id)}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                  <span className="text-gray-700">{r.name}</span>
+                </label>
+              ))}
+          </div>
         </div>
 
         {/* System Role */}
@@ -201,12 +205,9 @@ export default function AddRoles() {
           {loading ? "Saving..." : id ? "Update Role" : "Add Role"}
         </button>
       </form>
+
+      {/* Toastify container */}
+      <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
     </div>
   );
 }
-
-
-
-
-
-

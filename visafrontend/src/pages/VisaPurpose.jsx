@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function VisaPurpose() {
   const [visaPurposes, setVisaPurposes] = useState([]);
@@ -11,13 +13,14 @@ export default function VisaPurpose() {
   // Fetch visa purposes
   const fetchVisaPurposes = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/visapurpose"); // backend route
+      const res = await axios.get("http://localhost:5000/api/visapurpose");
       if (Array.isArray(res.data)) setVisaPurposes(res.data);
       else if (res.data.data && Array.isArray(res.data.data))
         setVisaPurposes(res.data.data);
       else setVisaPurposes([]);
     } catch (err) {
       console.error("❌ Error fetching visa purposes:", err);
+      toast.error("Failed to fetch visa purposes ❌");
     }
   };
 
@@ -30,15 +33,20 @@ export default function VisaPurpose() {
     if (window.confirm("Are you sure you want to delete this visa purpose?")) {
       try {
         await axios.delete(`http://localhost:5000/api/visapurpose/${id}`);
+        toast.success("Visa purpose deleted successfully ✅");
         fetchVisaPurposes();
       } catch (err) {
         console.error("❌ Error deleting visa purpose:", err);
+        toast.error("Failed to delete visa purpose ❌");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -78,9 +86,7 @@ export default function VisaPurpose() {
                 >
                   <td className="p-3 font-medium text-gray-700">{vp.key}</td>
                   <td className="p-3 text-gray-600">{vp.name}</td>
-                  <td className="p-3 text-gray-600">
-                    {vp.description || "-"}
-                  </td>
+                  <td className="p-3 text-gray-600">{vp.description || "-"}</td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${

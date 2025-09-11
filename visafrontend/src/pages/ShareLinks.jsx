@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ShareLinks() {
   const [links, setLinks] = useState([]);
@@ -21,6 +23,7 @@ export default function ShareLinks() {
       setVisaOptions(Array.isArray(visaRes.data) ? visaRes.data : visaRes.data?.data || []);
     } catch (err) {
       console.error("❌ Error fetching data:", err);
+      toast.error("❌ Failed to fetch share links or visa options");
       setLinks([]);
       setVisaOptions([]);
     }
@@ -35,15 +38,20 @@ export default function ShareLinks() {
     if (window.confirm("Are you sure you want to delete this share link?")) {
       try {
         await axios.delete(`http://localhost:5000/api/sharelink/${id}`);
+        toast.success("✅ Share link deleted successfully!");
         fetchData();
       } catch (err) {
         console.error("❌ Error deleting share link:", err);
+        toast.error("❌ Failed to delete share link");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

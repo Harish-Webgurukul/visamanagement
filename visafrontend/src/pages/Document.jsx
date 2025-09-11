@@ -1,8 +1,11 @@
+// Document.jsx
 import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Document() {
   const [documents, setDocuments] = useState([]);
@@ -17,6 +20,7 @@ export default function Document() {
       else setDocuments([]);
     } catch (err) {
       console.error("❌ Error fetching documents:", err);
+      toast.error("❌ Failed to fetch documents");
     }
   };
 
@@ -29,15 +33,20 @@ export default function Document() {
     if (window.confirm("Are you sure you want to delete this document?")) {
       try {
         await axios.delete(`http://localhost:5000/api/document/${id}`);
+        toast.success("✅ Document deleted successfully!");
         fetchDocuments();
       } catch (err) {
         console.error("❌ Error deleting document:", err);
+        toast.error("❌ Failed to delete document");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -98,10 +107,8 @@ export default function Document() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-dacument/${doc._id}`)}
-                                  className={`${
-                                    active ? "bg-gray-100" : ""
-                                  } w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  onClick={() => navigate(`/add-document/${doc._id}`)}
+                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   Edit
                                 </button>
@@ -111,9 +118,7 @@ export default function Document() {
                               {({ active }) => (
                                 <button
                                   onClick={() => handleDelete(doc._id)}
-                                  className={`${
-                                    active ? "bg-gray-100" : ""
-                                  } w-full text-left px-4 py-2 text-sm text-red-600`}
+                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
                                 </button>

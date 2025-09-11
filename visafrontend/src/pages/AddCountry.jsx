@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddCountry() {
   const [formData, setFormData] = useState({
@@ -12,7 +14,6 @@ export default function AddCountry() {
     meta: ""
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -35,7 +36,7 @@ export default function AddCountry() {
       }
     } catch (err) {
       console.error("❌ Error fetching country:", err);
-      setMessage("❌ Failed to load country data.");
+      toast.error("❌ Failed to load country data.");
     }
   };
 
@@ -51,7 +52,6 @@ export default function AddCountry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       const payload = {
@@ -61,17 +61,17 @@ export default function AddCountry() {
 
       if (id) {
         await axios.put(`http://localhost:5000/api/country/${id}`, payload);
-        setMessage("✅ Country updated successfully!");
+        toast.success("✅ Country updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/country", payload);
-        setMessage("✅ Country added successfully!");
+        toast.success("✅ Country added successfully!");
         setFormData({ name: "", iso2: "", iso3: "", flagUrl: "", defaultCurrency: "", meta: "" });
       }
 
       setTimeout(() => navigate("/country"), 1000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error saving country. Check your 'meta' JSON.");
+      toast.error("❌ Error saving country. Check your 'meta' JSON.");
     } finally {
       setLoading(false);
     }
@@ -79,15 +79,12 @@ export default function AddCountry() {
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-md mt-10">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold mb-6 text-center">
         {id ? "Edit Country" : "Add Country"}
       </h2>
-
-      {message && (
-        <div className={`mb-4 p-3 rounded-md text-center text-white ${message.startsWith("✅") ? "bg-green-500" : "bg-red-500"}`}>
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {["name", "iso2", "iso3", "flagUrl", "defaultCurrency"].map((field) => (

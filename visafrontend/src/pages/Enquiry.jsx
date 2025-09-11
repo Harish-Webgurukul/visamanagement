@@ -1,9 +1,10 @@
-
 import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Enquiry() {
   const [users, setUsers] = useState([]);
@@ -18,6 +19,7 @@ export default function Enquiry() {
       else setUsers([]);
     } catch (err) {
       console.error("❌ Error fetching enquiries:", err);
+      toast.error("Failed to fetch enquiries ❌");
     }
   };
 
@@ -30,15 +32,20 @@ export default function Enquiry() {
     if (window.confirm("Are you sure you want to delete this enquiry?")) {
       try {
         await axios.delete(`http://localhost:5000/api/enquiry/${id}`);
+        toast.success("Enquiry deleted successfully ✅");
         fetchUsers();
       } catch (err) {
         console.error("❌ Error deleting enquiry:", err);
+        toast.error("Failed to delete enquiry ❌");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

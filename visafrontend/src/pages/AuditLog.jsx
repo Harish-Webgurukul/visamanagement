@@ -3,18 +3,24 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
 
 export default function AuditLog() {
   const [logs, setLogs] = useState([]);
-  const navigate = useNavigate(); // <-- Added
+  const navigate = useNavigate();
 
   // Fetch audit logs
   const fetchLogs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/auditlog"); // Update URL if needed
-      setLogs(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      const res = await axios.get("http://localhost:5000/api/auditlog");
+      const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setLogs(data);
+      toast.success("✅ Audit logs loaded successfully!");
     } catch (err) {
       console.error("❌ Error fetching audit logs:", err);
+      toast.error("❌ Failed to fetch audit logs");
+      setLogs([]);
     }
   };
 
@@ -22,8 +28,30 @@ export default function AuditLog() {
     fetchLogs();
   }, []);
 
+  // Delete log
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this log?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/auditlog/${id}`);
+        toast.success("✅ Audit log deleted successfully!");
+        fetchLogs();
+      } catch (err) {
+        console.error("❌ Error deleting audit log:", err);
+        toast.error("❌ Failed to delete audit log");
+      }
+    }
+  };
+
+  // Edit log
+  const handleEdit = (id) => {
+    navigate(`/add-auditLog/${id}`); // navigate to AddAuditLog page with id
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -31,7 +59,7 @@ export default function AuditLog() {
           <p className="text-sm text-gray-500">Track all actions performed in the system.</p>
         </div>
         <button
-          onClick={() => navigate("/add-auditLog")} // <-- Navigate to Add Audit Log page
+          onClick={() => navigate("/add-auditLog")}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
           ➕ Add Audit Log
@@ -81,6 +109,26 @@ export default function AuditLog() {
                       >
                         <Menu.Items className="absolute right-0 mt-2 w-36 origin-top-right bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-10">
                           <div className="py-1">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  onClick={() => handleEdit(log._id)}
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
+                                  onClick={() => handleDelete(log._id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </Menu.Item>
                             <Menu.Item>
                               {({ active }) => (
                                 <button

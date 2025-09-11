@@ -104,6 +104,8 @@ const App = () => {
 
               <Route path="/auditLog" element={<AuditLog />} />
               <Route path="/add-auditLog" element={<AddAuditLog />} />
+              <Route path="/add-auditLog/:id" element={<AddAuditLog />} />
+
             </Route>
             <Route path="/" element={<Root />} />
             <Route path="*" element={<NotFound />} />

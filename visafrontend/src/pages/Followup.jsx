@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Followup() {
   const [followups, setFollowups] = useState([]);
@@ -17,6 +19,7 @@ export default function Followup() {
       else setFollowups([]);
     } catch (err) {
       console.error("❌ Error fetching followups:", err);
+      toast.error("❌ Failed to fetch followups");
     }
   };
 
@@ -29,15 +32,20 @@ export default function Followup() {
     if (window.confirm("Are you sure you want to delete this followup?")) {
       try {
         await axios.delete(`http://localhost:5000/api/followup/${id}`);
+        toast.success("✅ Followup deleted successfully!");
         fetchFollowups();
       } catch (err) {
         console.error("❌ Error deleting followup:", err);
+        toast.error("❌ Failed to delete followup");
       }
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>

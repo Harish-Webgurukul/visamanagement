@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddNotification() {
   const [formData, setFormData] = useState({
@@ -13,7 +15,6 @@ export default function AddNotification() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const { id } = useParams(); // For edit mode
 
@@ -38,7 +39,7 @@ export default function AddNotification() {
         }
       } catch (err) {
         console.error("❌ Error fetching notification:", err);
-        setMessage("❌ Failed to load notification data.");
+        toast.error("❌ Failed to load notification data.");
       }
     };
 
@@ -58,7 +59,6 @@ export default function AddNotification() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     const payload = {
       toUser: formData.toUser || null,
@@ -74,10 +74,10 @@ export default function AddNotification() {
     try {
       if (id) {
         await axios.put(`http://localhost:5000/api/notification/${id}`, payload);
-        setMessage("✅ Notification updated successfully!");
+        toast.success("✅ Notification updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/notification", payload);
-        setMessage("✅ Notification added successfully!");
+        toast.success("✅ Notification added successfully!");
         setFormData({
           toUser: "",
           toEmail: "",
@@ -87,10 +87,11 @@ export default function AddNotification() {
           body: "",
         });
       }
+
       setTimeout(() => navigate("/notification"), 1000);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error saving notification.");
+      toast.error("❌ Error saving notification.");
     } finally {
       setLoading(false);
     }
@@ -98,15 +99,12 @@ export default function AddNotification() {
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Notification" : "Add Notification"}
       </h2>
-
-      {message && (
-        <div className="mb-4 p-3 rounded-md text-center text-white bg-blue-500">
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* To User */}

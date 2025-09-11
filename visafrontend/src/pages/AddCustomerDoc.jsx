@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddCustomerDoc() {
   const [enquiries, setEnquiries] = useState([]);
@@ -15,7 +17,6 @@ export default function AddCustomerDoc() {
     sensitive: false,
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const navigate = useNavigate();
   const { id } = useParams(); // For edit mode if needed
@@ -28,12 +29,11 @@ export default function AddCustomerDoc() {
           axios.get("http://localhost:5000/api/enquiry"),
           axios.get("http://localhost:5000/api/user"),
         ]);
-
-        // ✅ Ensure arrays
         setEnquiries(Array.isArray(enqRes.data) ? enqRes.data : enqRes.data?.data || []);
         setUsers(Array.isArray(userRes.data) ? userRes.data : userRes.data?.data || []);
       } catch (err) {
         console.error("❌ Error fetching data:", err);
+        toast.error("❌ Failed to fetch enquiries or users");
         setEnquiries([]);
         setUsers([]);
       }
@@ -53,11 +53,9 @@ export default function AddCustomerDoc() {
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file && !id) return alert("Please select a file to upload.");
+    if (!file && !id) return toast.error("❌ Please select a file to upload.");
 
     setLoading(true);
-    setMessage("");
-
     const data = new FormData();
     if (file) data.append("file", file);
     data.append("enquiry", formData.enquiry);
@@ -69,17 +67,15 @@ export default function AddCustomerDoc() {
 
     try {
       if (id) {
-        // Edit existing document
-        await axios.put(`http://localhost:5000/api/customer-doc/${id}`, data, {
+        await axios.put(`http://localhost:5000/api/customerdoc/${id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMessage("✅ Document updated successfully!");
+        toast.success("✅ Document updated successfully!");
       } else {
-        // Create new document
-        await axios.post("http://localhost:5000/api/customer-doc", data, {
+        await axios.post("http://localhost:5000/api/customerdoc", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMessage("✅ Document uploaded successfully!");
+        toast.success("✅ Document uploaded successfully!");
         setFormData({
           enquiry: "",
           uploadedBy: "",
@@ -90,10 +86,10 @@ export default function AddCustomerDoc() {
         });
         setFile(null);
       }
-      navigate("/customerDocs");
+      setTimeout(() => navigate("/customerDocs"), 1500);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error uploading document.");
+      toast.error("❌ Error uploading document.");
     } finally {
       setLoading(false);
     }
@@ -101,15 +97,12 @@ export default function AddCustomerDoc() {
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Customer Document" : "Add Customer Document"}
       </h2>
-
-      {message && (
-        <div className="mb-4 p-3 rounded-md text-center text-white bg-blue-500">
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Enquiry */}
@@ -123,12 +116,11 @@ export default function AddCustomerDoc() {
             className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             <option value="">Select Enquiry</option>
-            {Array.isArray(enquiries) &&
-              enquiries.map((e) => (
-                <option key={e._id} value={e._id}>
-                  {e.customerName || e._id}
-                </option>
-              ))}
+            {enquiries.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.customerName || e._id}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -143,12 +135,11 @@ export default function AddCustomerDoc() {
             className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             <option value="">Select User</option>
-            {Array.isArray(users) &&
-              users.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.name || u.email}
-                </option>
-              ))}
+            {users.map((u) => (
+              <option key={u._id} value={u._id}>
+                {u.name || u.email}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -224,4 +215,3 @@ export default function AddCustomerDoc() {
     </div>
   );
 }
- 

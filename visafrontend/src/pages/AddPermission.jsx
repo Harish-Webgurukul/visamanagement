@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddPermission() {
   const { id } = useParams(); // If editing
@@ -12,7 +14,6 @@ export default function AddPermission() {
     description: ""
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   // Fetch permission data for edit
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function AddPermission() {
         });
       } catch (err) {
         console.error("❌ Error fetching permission:", err);
+        toast.error("❌ Failed to fetch permission details!");
       }
     };
     fetchPermission();
@@ -43,23 +45,22 @@ export default function AddPermission() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (id) {
         await axios.put(`http://localhost:5000/api/permission/${id}`, formData);
-        setMessage("✅ Permission updated successfully!");
+        toast.success("✅ Permission updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/permission", formData);
-        setMessage("✅ Permission added successfully!");
+        toast.success("✅ Permission added successfully!");
         setFormData({ key: "", name: "", description: "" });
       }
 
       // Redirect after a short delay
-      setTimeout(() => navigate("/permission"), 1000);
+      setTimeout(() => navigate("/permission"), 1200);
     } catch (err) {
       console.error("❌ Error saving permission:", err);
-      setMessage("❌ Error saving permission. Key might be duplicate.");
+      toast.error("❌ Error saving permission. Key might be duplicate.");
     } finally {
       setLoading(false);
     }
@@ -67,19 +68,12 @@ export default function AddPermission() {
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {id ? "Edit Permission" : "Add Permission"}
       </h2>
-
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded-md text-center text-white ${
-            message.startsWith("✅") ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Key */}

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddEnquiry() {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ export default function AddEnquiry() {
         })
         .catch((err) => {
           console.error("❌ Failed to fetch enquiry:", err);
-          alert("Failed to load enquiry details.");
+          toast.error("Failed to load enquiry details ❌");
         })
         .finally(() => setLoading(false));
     }
@@ -95,16 +97,16 @@ export default function AddEnquiry() {
 
       if (id) {
         await axios.put(`http://localhost:5000/api/enquiry/${id}`, payload);
-        alert("✅ Enquiry updated successfully!");
+        toast.success("✅ Enquiry updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/enquiry", payload);
-        alert("✅ Enquiry submitted successfully!");
+        toast.success("✅ Enquiry submitted successfully!");
       }
 
-      navigate("/enquiry");
+      setTimeout(() => navigate("/enquiry"), 1500); // redirect after toast
     } catch (err) {
       console.error("❌ Error submitting enquiry:", err.response?.data || err.message);
-      alert("Error submitting enquiry. Please try again.");
+      toast.error("Error submitting enquiry ❌");
     }
   };
 
@@ -112,11 +114,13 @@ export default function AddEnquiry() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md mt-10">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h1 className="text-3xl font-bold text-gray-800 mb-6">
         {id ? "Edit Enquiry" : "Add New Enquiry"}
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-
         {/* Customer Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Customer Name *</label>

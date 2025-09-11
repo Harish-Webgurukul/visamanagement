@@ -1,10 +1,13 @@
+// AddDocument.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AddDocument() {
   const navigate = useNavigate();
-  const { id } = useParams(); // ✅ get :id from route
+  const { id } = useParams();
   const isEditMode = Boolean(id);
 
   const [formData, setFormData] = useState({
@@ -20,9 +23,8 @@ export default function AddDocument() {
   const [countries, setCountries] = useState([]);
   const [purposes, setPurposes] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  // Fetch dropdown data
+  // Fetch dropdowns
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
@@ -44,21 +46,21 @@ export default function AddDocument() {
         );
       } catch (err) {
         console.error("Dropdown fetch failed:", err);
+        toast.error("❌ Failed to load dropdowns");
         setCountries([]);
         setPurposes([]);
       }
     };
-
     fetchDropdowns();
   }, []);
 
-  // ✅ Fetch document if editing
+  // Fetch document if edit mode
   useEffect(() => {
     if (isEditMode) {
       const fetchDocument = async () => {
         try {
           const res = await axios.get(`http://localhost:5000/api/document/${id}`);
-          const doc = res.data.data || res.data; // depends on your API response
+          const doc = res.data.data || res.data;
           setFormData({
             country: doc.country?._id || "",
             purpose: doc.purpose?._id || "",
@@ -72,13 +74,14 @@ export default function AddDocument() {
           });
         } catch (err) {
           console.error("❌ Error fetching document:", err);
+          toast.error("❌ Failed to fetch document");
         }
       };
       fetchDocument();
     }
   }, [id, isEditMode]);
 
-  // Handle form input
+  // Handle input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -97,10 +100,7 @@ export default function AddDocument() {
   };
 
   const addArrayField = (field) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: [...prev[field], ""],
-    }));
+    setFormData((prev) => ({ ...prev, [field]: [...prev[field], ""] }));
   };
 
   const removeArrayField = (index, field) => {
@@ -115,15 +115,14 @@ export default function AddDocument() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
 
     try {
       if (isEditMode) {
         await axios.put(`http://localhost:5000/api/document/${id}`, formData);
-        setMessage("✅ Document updated successfully!");
+        toast.success("✅ Document updated successfully!");
       } else {
         await axios.post("http://localhost:5000/api/document", formData);
-        setMessage("✅ Document added successfully!");
+        toast.success("✅ Document added successfully!");
       }
 
       setTimeout(() => {
@@ -131,7 +130,7 @@ export default function AddDocument() {
       }, 1500);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error: Could not save Document.");
+      toast.error("❌ Error: Could not save document");
     } finally {
       setLoading(false);
     }
@@ -139,15 +138,12 @@ export default function AddDocument() {
 
   return (
     <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
+      {/* Toast container */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         {isEditMode ? "Edit Document" : "Add Document"}
       </h2>
-
-      {message && (
-        <div className="mb-4 p-3 rounded-md text-center text-white bg-blue-500">
-          {message}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Country */}
@@ -279,7 +275,7 @@ export default function AddDocument() {
           />
         </div>
 
-        {/* Template Checkbox */}
+        {/* Template */}
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
