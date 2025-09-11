@@ -1,103 +1,192 @@
 
 
+// import {
+//   ChartBarSquareIcon,   
+//   Cog6ToothIcon,        // For settings
+//   FolderIcon,           // For dashboard
+//   GlobeAltIcon,         // For countries
+//   ServerIcon,           // For user / role
+//   SignalIcon,           // For permissions
+//   XMarkIcon,            // Close or delete
+//   UsersIcon,            // For people / groups
+//   DocumentTextIcon,     // For documents
+//   QuestionMarkCircleIcon, // For enquiry
+//   ClipboardDocumentListIcon, // For followup
+//   LinkIcon,             // For share link
+//   BellIcon,             // For notifications
+//   ShieldCheckIcon,      // For audit log / security
+//   IdentificationIcon,   // For customer docs
+//   BriefcaseIcon         
+// } from "@heroicons/react/24/outline";
+
+// export const SIDE_MENU_ADMIN_DATA = [
+//   { name: "Dashboard", href: "/dashboard", icon: FolderIcon, current: true },
+//   { name: "User", href: "/user", icon: FolderIcon, current: true },
+//   { name: "Enquiry", href: "/enquiry", icon: UsersIcon, current: false },
+//   { name: "Role", href: "/role", icon: ServerIcon, current: false },
+//   { name: "Permission", href: "/permission", icon: SignalIcon, current: false },
+//   {
+//     name: "Country",
+//     href: "/country",
+//     icon: GlobeAltIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Visa Purpose",
+//     href: "/visaPurpose",
+//     icon: BriefcaseIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Visa Option",
+//     href: "/visaoption",
+//     icon: ChartBarSquareIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Document",
+//     href: "/document",
+//     icon: DocumentTextIcon,
+//     current: false,
+//   },
+//   // {
+//   //   name: "Enquiry",
+//   //   href: "/enquiry",
+//   //   icon: QuestionMarkCircleIcon,
+//   //   current: false,
+//   // },
+//   {
+//     name: "Follow Up",
+//     href: "/followup",
+//     icon: ClipboardDocumentListIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Customer Doc",
+//     href: "/customerDocs",
+//     icon: IdentificationIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Share Link",
+//     href: "/sharelink",
+//     icon: LinkIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Notification",
+//     href: "/notification",
+//     icon: BellIcon,
+//     current: false,
+//   },
+//   {
+//     name: "Audit Log",
+//     href: "/auditLog",
+//     icon: ShieldCheckIcon,
+//     current: false,
+//   },
+
+
+
+//   //  {
+//   //   name: "Master",
+//   //   href: "/master",
+//   //   icon: UsersIcon,
+//   //   current: false,
+//   //   children: [
+//   //     { name: "User", href: "#" },
+//   //     { name: "Roles and Permission", href: "#" },
+//   //     { name: "Customer Success", href: "#" },
+//   //   ],
+//   // },
+
+// ];
+
+
+
 import {
   ChartBarSquareIcon,   
-  Cog6ToothIcon,        // For settings
-  FolderIcon,           // For dashboard
-  GlobeAltIcon,         // For countries
-  ServerIcon,           // For user / role
-  SignalIcon,           // For permissions
-  XMarkIcon,            // Close or delete
-  UsersIcon,            // For people / groups
-  DocumentTextIcon,     // For documents
-  QuestionMarkCircleIcon, // For enquiry
-  ClipboardDocumentListIcon, // For followup
-  LinkIcon,             // For share link
-  BellIcon,             // For notifications
-  ShieldCheckIcon,      // For audit log / security
-  IdentificationIcon,   // For customer docs
+  Cog6ToothIcon,        
+  FolderIcon,           
+  GlobeAltIcon,         
+  ServerIcon,           
+  SignalIcon,            
+  XMarkIcon,            
+  UsersIcon,            
+  DocumentTextIcon,     
+  QuestionMarkCircleIcon, 
+  ClipboardDocumentListIcon, 
+  LinkIcon,             
+  BellIcon,             
+  ShieldCheckIcon,      
+  IdentificationIcon,   
   BriefcaseIcon         
 } from "@heroicons/react/24/outline";
 
 export const SIDE_MENU_ADMIN_DATA = [
-  { name: "Dashboard", href: "/dashboard", icon: FolderIcon, current: true },
-  { name: "User", href: "/user", icon: FolderIcon, current: true },
-  { name: "Enquiry", href: "/enquiry", icon: UsersIcon, current: false },
-  { name: "Role", href: "/role", icon: ServerIcon, current: false },
-  { name: "Permission", href: "/permission", icon: SignalIcon, current: false },
   {
-    name: "Country",
-    href: "/country",
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: FolderIcon,
+    current: true
+  },
+  {
+    name: "Master",
+    icon: UsersIcon,
+    current: false,
+    children: [
+      { name: "User", href: "/user", icon: ServerIcon },
+      { name: "Role", href: "/role", icon: Cog6ToothIcon },
+      { name: "Permission", href: "/permission", icon: SignalIcon }
+    ]
+  },
+  {
+    name: "Country Management",
     icon: GlobeAltIcon,
     current: false,
+    children: [
+      { name: "Country", href: "/country", icon: GlobeAltIcon },
+      { name: "Visa Purpose", href: "/visaPurpose", icon: BriefcaseIcon },
+      { name: "Visa Option", href: "/visaoption", icon: ChartBarSquareIcon }
+    ]
   },
   {
-    name: "Visa Purpose",
-    href: "/visaPurpose",
-    icon: BriefcaseIcon,
-    current: false,
-  },
-  {
-    name: "Visa Option",
-    href: "/visaoption",
-    icon: ChartBarSquareIcon,
-    current: false,
-  },
-  {
-    name: "Document",
-    href: "/document",
+    name: "Documents",
     icon: DocumentTextIcon,
     current: false,
+    children: [
+      { name: "Document", href: "/document", icon: DocumentTextIcon },
+      { name: "Customer Doc", href: "/customerDocs", icon: IdentificationIcon }
+    ]
   },
-  // {
-  //   name: "Enquiry",
-  //   href: "/enquiry",
-  //   icon: QuestionMarkCircleIcon,
-  //   current: false,
-  // },
+  {
+    name: "Enquiry",
+    href: "/enquiry",
+    icon: QuestionMarkCircleIcon,
+    current: false
+  },
   {
     name: "Follow Up",
     href: "/followup",
     icon: ClipboardDocumentListIcon,
-    current: false,
-  },
-  {
-    name: "Customer Doc",
-    href: "/customerDocs",
-    icon: IdentificationIcon,
-    current: false,
+    current: false
   },
   {
     name: "Share Link",
     href: "/sharelink",
     icon: LinkIcon,
-    current: false,
+    current: false
   },
   {
     name: "Notification",
     href: "/notification",
     icon: BellIcon,
-    current: false,
+    current: false
   },
   {
     name: "Audit Log",
     href: "/auditLog",
     icon: ShieldCheckIcon,
-    current: false,
-  },
-
-
-
-  //  {
-  //   name: "Master",
-  //   href: "/master",
-  //   icon: UsersIcon,
-  //   current: false,
-  //   children: [
-  //     { name: "User", href: "#" },
-  //     { name: "Roles and Permission", href: "#" },
-  //     { name: "Customer Success", href: "#" },
-  //   ],
-  // },
-
+    current: false
+  }
 ];
