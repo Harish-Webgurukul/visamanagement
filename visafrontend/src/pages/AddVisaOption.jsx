@@ -19,7 +19,7 @@ export default function AddVisaOption() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Fetch dropdown data (countries & purposes)
+  // 🔹 Fetch dropdown data
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -39,7 +39,7 @@ export default function AddVisaOption() {
             : purposesRes.data.data || []
         );
       } catch (err) {
-        console.error("Error fetching dropdown data", err);
+        console.error("❌ Error fetching dropdown data", err);
         setCountries([]);
         setPurposes([]);
       }
@@ -47,7 +47,7 @@ export default function AddVisaOption() {
     fetchOptions();
   }, []);
 
-  // ✅ Handle input changes
+  // 🔹 Handle text/checkbox inputs
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -56,7 +56,7 @@ export default function AddVisaOption() {
     }));
   };
 
-  // ✅ File uploads
+  // 🔹 File uploads
   const handleFileChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -64,7 +64,7 @@ export default function AddVisaOption() {
     }));
   };
 
-  // ✅ Add new Fee item
+  // 🔹 Add Fee item
   const addFeeItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -81,14 +81,14 @@ export default function AddVisaOption() {
     }));
   };
 
-  // ✅ Update Fee item
+  // 🔹 Update Fee item
   const updateFeeItem = (index, field, value) => {
     const updatedFees = [...formData.fees];
     updatedFees[index][field] = value;
     setFormData((prev) => ({ ...prev, fees: updatedFees }));
   };
 
-  // ✅ Add new Document Requirement
+  // 🔹 Add Document Requirement
   const addDocRequirement = () => {
     setFormData((prev) => ({
       ...prev,
@@ -106,14 +106,14 @@ export default function AddVisaOption() {
     }));
   };
 
-  // ✅ Update Document Requirement
+  // 🔹 Update Document Requirement
   const updateDocRequirement = (index, field, value) => {
     const updatedDocs = [...formData.documentRequirements];
     updatedDocs[index][field] = value;
     setFormData((prev) => ({ ...prev, documentRequirements: updatedDocs }));
   };
 
-  // ✅ Submit form
+  // 🔹 Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -122,10 +122,9 @@ export default function AddVisaOption() {
     try {
       const form = new FormData();
 
-      if (formData.country) form.append("country", formData.country);
-      if (formData.purpose) form.append("purpose", formData.purpose);
-      if (formData.title) form.append("title", formData.title);
-
+      form.append("country", formData.country);
+      form.append("purpose", formData.purpose);
+      form.append("title", formData.title);
       form.append("editorHtml", formData.editorHtml || "");
       form.append("addOnNotes", formData.addOnNotes || "");
       form.append("isActive", formData.isActive);
@@ -146,7 +145,10 @@ export default function AddVisaOption() {
         );
       }
 
-      console.log("📤 Submitting:", Object.fromEntries(form.entries()));
+      // Debug log
+      for (let [key, val] of form.entries()) {
+        console.log("➡️", key, val);
+      }
 
       await axios.post("http://localhost:5000/api/visaoption", form, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -169,7 +171,9 @@ export default function AddVisaOption() {
         "❌ Error saving Visa Option:",
         err.response?.data || err.message
       );
-      setMessage("❌ Error saving Visa Option.");
+      setMessage(
+        err.response?.data?.message || "❌ Error saving Visa Option."
+      );
     } finally {
       setLoading(false);
     }
@@ -198,7 +202,7 @@ export default function AddVisaOption() {
             value={formData.country}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 p-2 rounded"
           >
             <option value="">-- Select Country --</option>
             {countries.map((c) => (
@@ -219,7 +223,7 @@ export default function AddVisaOption() {
             value={formData.purpose}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 p-2 rounded"
           >
             <option value="">-- Select Purpose --</option>
             {purposes.map((p) => (
@@ -240,7 +244,7 @@ export default function AddVisaOption() {
             onChange={handleChange}
             required
             placeholder="Visa Option Title"
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 p-2 rounded"
           />
         </div>
 
@@ -255,7 +259,7 @@ export default function AddVisaOption() {
             onChange={handleChange}
             rows={4}
             placeholder="Enter HTML or description..."
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 p-2 rounded"
           />
         </div>
 
@@ -396,7 +400,7 @@ export default function AddVisaOption() {
             onChange={handleChange}
             rows={3}
             placeholder="Extra notes..."
-            className="w-full border border-gray-300 p-2 rounded focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 p-2 rounded"
           />
         </div>
 

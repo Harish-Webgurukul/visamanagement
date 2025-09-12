@@ -1,10 +1,10 @@
 import { useEffect, useState, Fragment } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AuditLog() {
   const [logs, setLogs] = useState([]);
@@ -14,13 +14,12 @@ export default function AuditLog() {
   const fetchLogs = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/auditlog");
-      const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
-      setLogs(data);
-      toast.success("✅ Audit logs loaded successfully!");
+      if (Array.isArray(res.data)) setLogs(res.data);
+      else if (res.data.data && Array.isArray(res.data.data)) setLogs(res.data.data);
+      else setLogs([]);
     } catch (err) {
       console.error("❌ Error fetching audit logs:", err);
-      toast.error("❌ Failed to fetch audit logs");
-      setLogs([]);
+      toast.error("Failed to fetch audit logs ❌");
     }
   };
 
@@ -30,36 +29,30 @@ export default function AuditLog() {
 
   // Delete log
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this log?")) {
+    if (window.confirm("Are you sure you want to delete this audit log?")) {
       try {
         await axios.delete(`http://localhost:5000/api/auditlog/${id}`);
-        toast.success("✅ Audit log deleted successfully!");
+        toast.success("Audit log deleted ✅");
         fetchLogs();
       } catch (err) {
-        console.error("❌ Error deleting audit log:", err);
-        toast.error("❌ Failed to delete audit log");
+        console.error("❌ Error deleting log:", err);
+        toast.error("Failed to delete audit log ❌");
       }
     }
   };
 
-  // Edit log
-  const handleEdit = (id) => {
-    navigate(`/add-auditLog/${id}`); // navigate to AddAuditLog page with id
-  };
-
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
-      {/* Toast Container */}
+    <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Audit Logs</h1>
-          <p className="text-sm text-gray-500">Track all actions performed in the system.</p>
+          <p className="text-sm text-gray-500">View and manage all audit logs.</p>
         </div>
         <button
-          onClick={() => navigate("/add-auditLog")}
+          onClick={() => navigate("/add-auditlog")} // Add new audit log
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-sm transition-all"
         >
           ➕ Add Audit Log
@@ -76,7 +69,7 @@ export default function AuditLog() {
               <th className="p-3 text-left">IP</th>
               <th className="p-3 text-left">User Agent</th>
               <th className="p-3 text-left">Target</th>
-              <th className="p-3 text-left">Timestamp</th>
+              <th className="p-3 text-left">Date</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
@@ -88,10 +81,10 @@ export default function AuditLog() {
                   className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
                 >
                   <td className="p-3 font-medium text-gray-700">{log.action}</td>
-                  <td className="p-3 text-gray-600">{log.performedBy || "-"}</td>
+                  <td className="p-3 text-gray-600">{log.performedBy?.name || log.performedBy || "-"}</td>
                   <td className="p-3 text-gray-600">{log.ip || "-"}</td>
-                  <td className="p-3 text-gray-600 truncate max-w-xs">{log.userAgent || "-"}</td>
-                  <td className="p-3 text-gray-600">{log.target?.kind || "-"}</td>
+                  <td className="p-3 text-gray-600">{log.userAgent || "-"}</td>
+                  <td className="p-3 text-gray-600">{log.target?.kind || "-"}: {log.target?.item || "-"}</td>
                   <td className="p-3 text-gray-600">{new Date(log.createdAt).toLocaleString()}</td>
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
@@ -107,13 +100,13 @@ export default function AuditLog() {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <Menu.Items className="absolute right-0 mt-2 w-36 origin-top-right bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-10">
+                        <Menu.Items className="absolute right-0 mt-2 w-32 origin-top-right bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-10">
                           <div className="py-1">
                             <Menu.Item>
                               {({ active }) => (
                                 <button
+                                  onClick={() => navigate(`/add-auditlog/${log._id}`)} // Navigate to edit page
                                   className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
-                                  onClick={() => handleEdit(log._id)}
                                 >
                                   Edit
                                 </button>
@@ -122,20 +115,10 @@ export default function AuditLog() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
                                   onClick={() => handleDelete(log._id)}
+                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
-                                </button>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
-                                  onClick={() => alert(JSON.stringify(log, null, 2))}
-                                >
-                                  View Details
                                 </button>
                               )}
                             </Menu.Item>

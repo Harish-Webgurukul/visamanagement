@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function AddAuditLog() {
+  const { id } = useParams(); // get id from URL for edit
   const [formData, setFormData] = useState({
     action: "",
     performedBy: "",
@@ -17,6 +18,31 @@ export default function AddAuditLog() {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Fetch existing log for edit
+  useEffect(() => {
+    if (!id) return; // skip if adding new
+    const fetchLog = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/auditlog/${id}`);
+        const log = res.data;
+        setFormData({
+          action: log.action || "",
+          performedBy: log.performedBy || "",
+          ip: log.ip || "",
+          userAgent: log.userAgent || "",
+          targetKind: log.target?.kind || "",
+          targetId: log.target?.item || "",
+          before: log.before ? JSON.stringify(log.before, null, 2) : "",
+          after: log.after ? JSON.stringify(log.after, null, 2) : "",
+        });
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ Failed to fetch audit log for edit");
+      }
+    };
+    fetchLog();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,12 +60,11 @@ export default function AddAuditLog() {
       if (formData.before.trim()) beforeObj = JSON.parse(formData.before);
       if (formData.after.trim()) afterObj = JSON.parse(formData.after);
     } catch {
-      toast.error("❌ 'Before' or 'After' fields must be valid JSON!");
+      toast.error("❌ 'Before' or 'After' must be valid JSON!");
       setLoading(false);
       return;
     }
 
-    // Construct payload
     const payload = {
       action: formData.action,
       performedBy: formData.performedBy || "",
@@ -54,29 +79,29 @@ export default function AddAuditLog() {
     };
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auditlog", payload);
-
-      // Success
-      toast.success("✅ Audit Log added successfully!");
-      setFormData({
-        action: "",
-        performedBy: "",
-        ip: "",
-        userAgent: "",
-        targetKind: "",
-        targetId: "",
-        before: "",
-        after: "",
-      });
-
+      if (id) {
+        // Edit mode
+        await axios.put(`http://localhost:5000/api/auditlog/${id}`, payload);
+        toast.success("✅ Audit Log updated successfully!");
+      } else {
+        // Add mode
+        await axios.post("http://localhost:5000/api/auditlog", payload);
+        toast.success("✅ Audit Log added successfully!");
+        setFormData({
+          action: "",
+          performedBy: "",
+          ip: "",
+          userAgent: "",
+          targetKind: "",
+          targetId: "",
+          before: "",
+          after: "",
+        });
+      }
       setTimeout(() => navigate("/auditLog"), 1000);
     } catch (err) {
       console.error(err);
-      if (err.response?.data?.errors) {
-        toast.error(`❌ Error: ${err.response.data.errors.join(", ")}`);
-      } else {
-        toast.error("❌ Server Error: Check console for details");
-      }
+      toast.error("❌ Server Error: Check console for details");
     } finally {
       setLoading(false);
     }
@@ -86,7 +111,7 @@ export default function AddAuditLog() {
     <div className="max-w-lg mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
       <ToastContainer position="top-right" autoClose={3000} />
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-        Add Audit Log
+        {id ? "Edit Audit Log" : "Add Audit Log"}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -192,7 +217,7 @@ export default function AddAuditLog() {
           disabled={loading}
           className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Add Audit Log"}
+          {loading ? "Saving..." : id ? "Update Audit Log" : "Add Audit Log"}
         </button>
       </form>
     </div>
