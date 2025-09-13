@@ -1,21 +1,28 @@
-const fs = require('fs');
-const path = require('path');
-const bcrypt = require('bcryptjs');
-const { validationResult } = require('express-validator');
-const User = require('../models/User');
-const { successResponse } = require('../utils/response');
-const asyncHandler = require('../utils/asyncHandler');
 
-/** Delete old profile image */
-const deleteOldImage = (imagePath) => {
-  if (!imagePath) return;
-  const filePath = path.join(__dirname, '..', imagePath);
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+const bcrypt = require("bcryptjs");
+const { validationResult } = require("express-validator");
+const path = require("path");
+const fs = require("fs");
+const User = require("../models/User");
+const { successResponse } = require("../utils/response");
+const asyncHandler = require("../utils/asyncHandler");
+const { cloudinary } = require("../config/multer");
+
+// Delete old profile image from Cloudinary
+const deleteOldImage = async (fileName) => {
+  if (!fileName) return;
+  const publicId = `profileImages/${fileName.split(".")[0]}`;
+  await cloudinary.uploader.destroy(publicId);
 };
 
-// ➕ Create User
+// Upload file to Cloudinary
+const uploadToCloudinary = async (filePath, folder) => {
+  const result = await cloudinary.uploader.upload(filePath, { folder });
+  return result.secure_url;
+};
+
+// // Create User
 exports.createUser = asyncHandler(async (req, res) => {
-  // Validation
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
@@ -23,52 +30,84 @@ exports.createUser = asyncHandler(async (req, res) => {
 
   // Check duplicate email
   const existingUser = await User.findOne({ email });
-  if (existingUser) return res.status(400).json({ success: false, error: 'Email already exists!' });
+  if (existingUser) return res.status(400).json({ success: false, error: "Email already exists!" });
+  if (!password) return res.status(400).json({ success: false, error: "Password is required!" });
 
-  // Hash password
-  if (!password) return res.status(400).json({ success: false, error: 'Password is required!' });
   rest.passwordHash = await bcrypt.hash(password, 10);
 
-  // Profile image
-  if (req.file) rest.profileImage = `/uploads/profileImages/${req.file.filename}`;
+  // Handle profile image (local + Cloudinary)
+  if (req.file) {
+  const cloudUrl = await uploadToCloudinary(req.file.path, "profileImages");
+  rest.profileImage = cloudUrl;          // required field
+  rest.profileImageLocal = req.file.path;
+  rest.profileImageCloud = cloudUrl;
+}
 
-  rest.roles = roles ? JSON.parse(roles) : [];
+  // Parse roles safely
+  try {
+    rest.roles = roles ? JSON.parse(roles) : [];
+  } catch (err) {
+    return res.status(400).json({ success: false, error: "Invalid roles format!" });
+  }
+
   rest.customerProfile = { passportNo, dob, address };
 
   const user = await User.create({ email, ...rest });
-  return successResponse(res, 'User created successfully', user);
+
+  return successResponse(res, "User created successfully", user);
 });
 
-// 📄 Get All Users
+
+
+// Get All Users
 exports.getUsers = asyncHandler(async (req, res) => {
   const users = await User.find()
-    .populate('roles', 'name')
-    .populate('createdBy', 'name email');
-  return successResponse(res, 'Users fetched successfully', users);
+    .populate("roles", "name")
+    .populate("createdBy", "name email");
+
+  const updatedUsers = users.map(user => ({
+    ...user._doc,
+    profileImageCloud: user.profileImageCloud || null,
+    profileImageLocal: user.profileImageLocal
+      ? `http://localhost:5000/${user.profileImageLocal.replace(/\\/g, "/")}`
+      : null, // replace backslashes for Windows paths
+  }));
+
+  return successResponse(res, "Users fetched successfully", updatedUsers);
 });
 
-// 📄 Get One User
+// Get Single User
 exports.getUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id)
-    .populate('roles', 'name')
-    .populate('createdBy', 'name email');
-  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-  return successResponse(res, 'User fetched successfully', user);
+    .populate("roles", "name")
+    .populate("createdBy", "name email");
+
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+  const updatedUser = {
+    ...user._doc,
+    profileImageCloud: user.profileImageCloud || null,
+    profileImageLocal: user.profileImageLocal
+      ? `http://localhost:5000/${user.profileImageLocal.replace(/\\/g, "/")}`
+      : null,
+  };
+
+  return successResponse(res, "User fetched successfully", updatedUser);
 });
 
-// ✏️ Update User
+// Update User
 exports.updateUser = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
   const { password, passportNo, dob, address, roles, email, ...rest } = req.body;
   const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-  // Check if email is changing to another user's email
+  // Check email change
   if (email && email !== user.email) {
     const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ success: false, error: 'Email already exists!' });
+    if (exists) return res.status(400).json({ success: false, error: "Email already exists!" });
     user.email = email;
   }
 
@@ -83,25 +122,27 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
   // Update profile image
   if (req.file) {
-    if (user.profileImage) deleteOldImage(user.profileImage);
-    user.profileImage = `/uploads/profileImages/${req.file.filename}`;
+    if (user.profileImageCloud) await deleteOldImage(user.profileImageCloud);
+    user.profileImageLocal = req.file.path;
+    user.profileImageCloud = await uploadToCloudinary(req.file.path, "profileImages");
   }
 
   // Update other fields
-  Object.keys(rest).forEach((key) => {
+  Object.keys(rest).forEach(key => {
     user[key] = rest[key];
   });
 
   await user.save();
-  return successResponse(res, 'User updated successfully', user);
+  return successResponse(res, "User updated successfully", user);
 });
 
-// ❌ Delete User
+// Delete User
 exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+  if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-  if (user.profileImage) deleteOldImage(user.profileImage);
+  if (user.profileImageCloud) await deleteOldImage(user.profileImageCloud);
+
   await user.deleteOne();
-  return successResponse(res, 'User deleted successfully');
+  return successResponse(res, "User deleted successfully");
 });
