@@ -1,3 +1,4 @@
+
 import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,16 +9,21 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Permission() {
   const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch permissions
+  // Fetch all permissions
   const fetchPermissions = async () => {
     try {
+      setLoading(true);
       const res = await axios.get("http://localhost:5000/api/permission");
+      // Backend response handling
       setPermissions(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (err) {
       console.error("❌ Error fetching permissions:", err);
       toast.error("❌ Failed to fetch permissions!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,17 +31,17 @@ export default function Permission() {
     fetchPermissions();
   }, []);
 
-  // Delete permission
+  // Delete a permission
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this permission?")) {
-      try {
-        await axios.delete(`http://localhost:5000/api/permission/${id}`);
-        toast.success("✅ Permission deleted successfully!");
-        fetchPermissions();
-      } catch (err) {
-        console.error("❌ Error deleting permission:", err);
-        toast.error("❌ Failed to delete permission!");
-      }
+    if (!window.confirm("Are you sure you want to delete this permission?")) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/permission/${id}`);
+      toast.success("✅ Permission deleted successfully!");
+      fetchPermissions();
+    } catch (err) {
+      console.error("❌ Error deleting permission:", err);
+      toast.error("❌ Failed to delete permission!");
     }
   };
 
@@ -48,7 +54,9 @@ export default function Permission() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Permissions</h1>
-          <p className="text-sm text-gray-500">Manage all permissions in the system.</p>
+          <p className="text-sm text-gray-500">
+            Manage all permissions in the system.
+          </p>
         </div>
         <button
           onClick={() => navigate("/add-permission")}
@@ -63,22 +71,31 @@ export default function Permission() {
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
             <tr>
-              <th className="p-3 text-left">Key</th>
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Description</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {permissions.length > 0 ? (
+            {/* Loading State */}
+            {loading ? (
+              <tr>
+                <td colSpan="3" className="p-6 text-center text-gray-500 italic">
+                  Loading permissions...
+                </td>
+              </tr>
+            ) : permissions.length > 0 ? (
               permissions.map((perm, index) => (
                 <tr
                   key={perm._id}
-                  className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
+                  className={`${
+                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-gray-100 transition`}
                 >
-                  <td className="p-3 font-medium text-gray-700">{perm.key}</td>
-                  <td className="p-3 text-gray-600">{perm.name}</td>
-                  <td className="p-3 text-gray-600">{perm.description || "-"}</td>
+                  <td className="p-3 font-medium text-gray-700">{perm.name}</td>
+                  <td className="p-3 text-gray-600">
+                    {perm.description || "-"}
+                  </td>
                   <td className="p-3 text-center">
                     <Menu as="div" className="relative inline-block text-left">
                       <Menu.Button className="inline-flex justify-center w-full p-1 text-gray-500 hover:text-gray-700">
@@ -98,8 +115,12 @@ export default function Permission() {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  onClick={() => navigate(`/add-permission/${perm._id}`)}
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  onClick={() =>
+                                    navigate(`/add-permission/${perm._id}`)
+                                  }
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   Edit
                                 </button>
@@ -109,7 +130,9 @@ export default function Permission() {
                               {({ active }) => (
                                 <button
                                   onClick={() => handleDelete(perm._id)}
-                                  className={`${active ? "bg-gray-100" : ""} w-full text-left px-4 py-2 text-sm text-red-600`}
+                                  className={`${
+                                    active ? "bg-gray-100" : ""
+                                  } w-full text-left px-4 py-2 text-sm text-red-600`}
                                 >
                                   Delete
                                 </button>
@@ -124,7 +147,10 @@ export default function Permission() {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="p-6 text-center text-gray-500 italic">
+                <td
+                  colSpan="3"
+                  className="p-6 text-center text-gray-500 italic"
+                >
                   No permissions found 🚫
                 </td>
               </tr>

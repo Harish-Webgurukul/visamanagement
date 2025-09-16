@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -5,25 +6,25 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function AddPermission() {
-  const { id } = useParams(); // If editing
+  const { id } = useParams(); // Get permission id from route params (for edit mode)
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    key: "",
     name: "",
     description: ""
   });
   const [loading, setLoading] = useState(false);
 
-  // Fetch permission data for edit
+  // Fetch permission data when editing
   useEffect(() => {
     if (!id) return;
+
     const fetchPermission = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/permission/${id}`);
-        const data = res.data.data || res.data; // handle API response
+        const data = res.data.data || res.data;
+
         setFormData({
-          key: data.key || "",
           name: data.name || "",
           description: data.description || ""
         });
@@ -32,6 +33,7 @@ export default function AddPermission() {
         toast.error("❌ Failed to fetch permission details!");
       }
     };
+
     fetchPermission();
   }, [id]);
 
@@ -41,26 +43,30 @@ export default function AddPermission() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit form
+  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (id) {
+        // Update existing permission
         await axios.put(`http://localhost:5000/api/permission/${id}`, formData);
         toast.success("✅ Permission updated successfully!");
       } else {
+        // Create new permission
         await axios.post("http://localhost:5000/api/permission", formData);
         toast.success("✅ Permission added successfully!");
-        setFormData({ key: "", name: "", description: "" });
+        setFormData({ name: "", description: "" });
       }
 
-      // Redirect after a short delay
+      // Redirect after success
       setTimeout(() => navigate("/permission"), 1200);
     } catch (err) {
       console.error("❌ Error saving permission:", err);
-      toast.error("❌ Error saving permission. Key might be duplicate.");
+
+      const errorMessage = err.response?.data?.message || "❌ Error saving permission!";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -76,20 +82,6 @@ export default function AddPermission() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Key */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-1">Key *</label>
-          <input
-            type="text"
-            name="key"
-            value={formData.key}
-            onChange={handleChange}
-            required
-            placeholder="e.g., enquiry:create"
-            className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          />
-        </div>
-
         {/* Name */}
         <div>
           <label className="block text-gray-700 font-medium mb-1">Name *</label>
@@ -99,7 +91,7 @@ export default function AddPermission() {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="Human-readable name"
+            placeholder="e.g., Create Enquiry"
             className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
@@ -111,12 +103,12 @@ export default function AddPermission() {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Optional description"
+            placeholder="Optional description of permission"
             className="w-full border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}

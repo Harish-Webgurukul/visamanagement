@@ -1,7 +1,14 @@
 const { body } = require('express-validator');
 
 exports.permissionValidation = [
-  body('key').notEmpty().withMessage('Key is required'),
-  body('name').notEmpty().withMessage('Name is required'),
-  body('description').optional().isString()
+  body('name')
+    .notEmpty()
+    .withMessage('Name is required')
+    .isString()
+    .withMessage('Name must be a string'),
+
+  body('description')
+    .optional()
+    .isString()
+    .withMessage('Description must be a string')
 ];
