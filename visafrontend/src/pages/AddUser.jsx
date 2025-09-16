@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -24,8 +23,12 @@ export default function AddUser() {
 
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [hasExistingImage, setHasExistingImage] = useState(false);
+  const [imageError, setImageError] = useState(null); // ✅ Track image loading errors
 
   useEffect(() => {
+    console.log("Edit user data:", editUser); // ✅ Debug: Log editUser data
     if (editUser) {
       setFormData({
         name: editUser.name || "",
@@ -39,6 +42,24 @@ export default function AddUser() {
         role: editUser.roles?.[0]?._id || "",
         isActive: editUser.isActive || true,
       });
+
+      if (editUser.profileImage) {
+        const imageUrl = `http://localhost:5000${editUser.profileImage}`;
+        console.log("Attempting to set preview image:", imageUrl); // ✅ Debug: Log image URL
+        setPreviewImage(imageUrl);
+        setHasExistingImage(true);
+        setImageError(null); // Reset error state
+      } else {
+        console.log("No profile image found in editUser"); // ✅ Debug
+        setPreviewImage(null);
+        setHasExistingImage(false);
+        setImageError("No image available");
+      }
+    } else {
+      console.log("Creating new user, no editUser data"); // ✅ Debug
+      setPreviewImage(null);
+      setHasExistingImage(false);
+      setImageError(null);
     }
   }, [editUser]);
 
@@ -66,8 +87,31 @@ export default function AddUser() {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFormData((prev) => ({ ...prev, profileImage: e.target.files[0] }));
+      const file = e.target.files[0];
+      console.log("Selected file:", file); // ✅ Debug: Log selected file
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        toast.error("Only JPEG or PNG images are allowed");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, profileImage: file }));
+      setPreviewImage(URL.createObjectURL(file));
+      setHasExistingImage(false);
+      setImageError(null);
+    } else {
+      console.log("No file selected"); // ✅ Debug
     }
+  };
+
+  const handleClearImage = () => {
+    console.log("Clearing image"); // ✅ Debug
+    setFormData((prev) => ({ ...prev, profileImage: null }));
+    setPreviewImage(null);
+    setHasExistingImage(false);
+    setImageError("Image cleared");
   };
 
   const handleSubmit = async (e) => {
@@ -85,22 +129,43 @@ export default function AddUser() {
       data.append("address", formData.address);
       data.append("isActive", formData.isActive ? "true" : "false");
       data.append("roles", JSON.stringify(formData.role ? [formData.role] : []));
+
+      for (let [key, value] of data.entries()) {
+        console.log(`FormData: ${key} =`, value); // ✅ Debug: Log FormData
+      }
+
       if (formData.profileImage) {
         data.append("profileImage", formData.profileImage);
+        console.log("Appending new profile image:", formData.profileImage); // ✅ Debug
+      } else if (!hasExistingImage && editUser) {
+        data.append("removeProfileImage", "true");
+        console.log("Appending removeProfileImage flag"); // ✅ Debug
+      } else {
+        console.log("Retaining existing image"); // ✅ Debug
       }
 
       let res;
       if (editUser) {
+        console.log("Sending PUT request for user:", editUser._id); // ✅ Debug
         res = await axios.put(
           `http://localhost:5000/api/user/${editUser._id}`,
           data,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
       } else {
+        console.log("Sending POST request for new user"); // ✅ Debug
+        if (!formData.profileImage) {
+          toast.error("Profile image is required for new users");
+          setLoading(false);
+          return;
+        }
+        data.append("profileImage", formData.profileImage);
         res = await axios.post("http://localhost:5000/api/user", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
+
+      console.log("API Response:", res.data); // ✅ Debug
 
       if (res.data.success) {
         toast.success(
@@ -112,7 +177,6 @@ export default function AddUser() {
       }
     } catch (err) {
       console.error("Error submitting user:", err.response?.data || err);
-
       if (err.response?.data?.errors) {
         err.response.data.errors.forEach((e) => toast.error(e.msg));
       } else if (err.response?.data?.error?.includes("duplicate key")) {
@@ -261,7 +325,7 @@ export default function AddUser() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Profile Image {editUser ? "" : <span className="text-red-500">*</span>}
+              Profile Image {editUser ? "(optional)" : <span className="text-red-500">*</span>}
             </label>
             <input
               name="profileImage"
@@ -269,14 +333,31 @@ export default function AddUser() {
               accept="image/*"
               onChange={handleFileChange}
               className="mt-1 block w-full text-base text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700"
-              required={!editUser}
             />
-            {editUser?.profileImage && (
-              <img
-                src={`http://localhost:5000${editUser.profileImage}`}
-                alt="Profile"
-                className="mt-2 w-20 h-20 rounded-full object-cover"
-              />
+            {previewImage ? (
+              <div className="mt-2 flex items-center">
+                <img
+                  src={previewImage}
+                  alt="Profile Preview"
+                  className="w-20 h-20 rounded-full object-cover"
+                  onError={(e) => {
+                    console.error("Image failed to load:", previewImage); // ✅ Debug
+                    setImageError("Failed to load image");
+                    e.target.src = "https://via.placeholder.com/80"; // Fallback image
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleClearImage}
+                  className="ml-4 text-sm text-red-500 hover:text-red-700"
+                >
+                  Clear Image
+                </button>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-gray-500">
+                {imageError || (editUser ? "No image selected" : "Please select an image")}
+              </p>
             )}
           </div>
 
