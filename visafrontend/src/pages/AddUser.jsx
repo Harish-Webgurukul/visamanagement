@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -6,7 +7,7 @@ import { toast } from "react-toastify";
 export default function AddUser() {
   const navigate = useNavigate();
   const location = useLocation();
-  const editUser = location.state?.user || null;
+  const editUser = location.state?.user || null; // data passed from User page if editing
 
   const [formData, setFormData] = useState({
     name: "",
@@ -16,53 +17,34 @@ export default function AddUser() {
     passportNo: "",
     dob: "",
     address: "",
-    profileImage: null,
-    role: "",
+    profileImage: null, // file object
+    role: "", // single selected role id
     isActive: true,
   });
 
   const [roles, setRoles] = useState([]);
+  const [previewImage, setPreviewImage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
-  const [hasExistingImage, setHasExistingImage] = useState(false);
-  const [imageError, setImageError] = useState(null); // ✅ Track image loading errors
 
+  // Prefill form if editing
   useEffect(() => {
-    console.log("Edit user data:", editUser); // ✅ Debug: Log editUser data
     if (editUser) {
       setFormData({
         name: editUser.name || "",
         email: editUser.email || "",
         mobile: editUser.mobile || "",
-        password: "",
+        password: "", // leave blank, optional to change
         passportNo: editUser.customerProfile?.passportNo || "",
         dob: editUser.customerProfile?.dob?.slice(0, 10) || "",
         address: editUser.customerProfile?.address || "",
-        profileImage: null,
+        profileImage: null, // file object
         role: editUser.roles?.[0]?._id || "",
         isActive: editUser.isActive || true,
       });
-
-      if (editUser.profileImage) {
-        const imageUrl = `http://localhost:5000${editUser.profileImage}`;
-        console.log("Attempting to set preview image:", imageUrl); // ✅ Debug: Log image URL
-        setPreviewImage(imageUrl);
-        setHasExistingImage(true);
-        setImageError(null); // Reset error state
-      } else {
-        console.log("No profile image found in editUser"); // ✅ Debug
-        setPreviewImage(null);
-        setHasExistingImage(false);
-        setImageError("No image available");
-      }
-    } else {
-      console.log("Creating new user, no editUser data"); // ✅ Debug
-      setPreviewImage(null);
-      setHasExistingImage(false);
-      setImageError(null);
     }
   }, [editUser]);
 
+  // Fetch roles
   const fetchRoles = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/role");
@@ -77,6 +59,7 @@ export default function AddUser() {
     fetchRoles();
   }, []);
 
+  // Input handler
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -85,33 +68,12 @@ export default function AddUser() {
     }));
   };
 
+  // File handler
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      console.log("Selected file:", file); // ✅ Debug: Log selected file
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB");
-        return;
-      }
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        toast.error("Only JPEG or PNG images are allowed");
-        return;
-      }
-      setFormData((prev) => ({ ...prev, profileImage: file }));
-      setPreviewImage(URL.createObjectURL(file));
-      setHasExistingImage(false);
-      setImageError(null);
-    } else {
-      console.log("No file selected"); // ✅ Debug
+      setFormData((prev) => ({ ...prev, profileImage: e.target.files[0] }));
+      setPreviewImage(URL.createObjectURL(e.target.files[0]));
     }
-  };
-
-  const handleClearImage = () => {
-    console.log("Clearing image"); // ✅ Debug
-    setFormData((prev) => ({ ...prev, profileImage: null }));
-    setPreviewImage(null);
-    setHasExistingImage(false);
-    setImageError("Image cleared");
   };
 
   const handleSubmit = async (e) => {
@@ -128,44 +90,28 @@ export default function AddUser() {
       data.append("dob", formData.dob);
       data.append("address", formData.address);
       data.append("isActive", formData.isActive ? "true" : "false");
-      data.append("roles", JSON.stringify(formData.role ? [formData.role] : []));
-
-      for (let [key, value] of data.entries()) {
-        console.log(`FormData: ${key} =`, value); // ✅ Debug: Log FormData
-      }
-
+      data.append(
+        "roles",
+        JSON.stringify(formData.role ? [formData.role] : [])
+      );
       if (formData.profileImage) {
         data.append("profileImage", formData.profileImage);
-        console.log("Appending new profile image:", formData.profileImage); // ✅ Debug
-      } else if (!hasExistingImage && editUser) {
-        data.append("removeProfileImage", "true");
-        console.log("Appending removeProfileImage flag"); // ✅ Debug
-      } else {
-        console.log("Retaining existing image"); // ✅ Debug
       }
 
       let res;
       if (editUser) {
-        console.log("Sending PUT request for user:", editUser._id); // ✅ Debug
+        // Update existing user
         res = await axios.put(
           `http://localhost:5000/api/user/${editUser._id}`,
           data,
           { headers: { "Content-Type": "multipart/form-data" } }
         );
       } else {
-        console.log("Sending POST request for new user"); // ✅ Debug
-        if (!formData.profileImage) {
-          toast.error("Profile image is required for new users");
-          setLoading(false);
-          return;
-        }
-        data.append("profileImage", formData.profileImage);
+        // Create new user
         res = await axios.post("http://localhost:5000/api/user", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
-
-      console.log("API Response:", res.data); // ✅ Debug
 
       if (res.data.success) {
         toast.success(
@@ -177,7 +123,9 @@ export default function AddUser() {
       }
     } catch (err) {
       console.error("Error submitting user:", err.response?.data || err);
+
       if (err.response?.data?.errors) {
+        // Validation errors from backend
         err.response.data.errors.forEach((e) => toast.error(e.msg));
       } else if (err.response?.data?.error?.includes("duplicate key")) {
         toast.error("Email already exists!");
@@ -185,7 +133,7 @@ export default function AddUser() {
         toast.error(err.response?.data?.message || "Something went wrong!");
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // ✅ always reset loading
     }
   };
 
@@ -210,8 +158,7 @@ export default function AddUser() {
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="Enter full name"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
@@ -225,8 +172,7 @@ export default function AddUser() {
               value={formData.email}
               onChange={handleChange}
               required
-              placeholder="Enter email"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
@@ -238,8 +184,7 @@ export default function AddUser() {
               name="mobile"
               value={formData.mobile}
               onChange={handleChange}
-              placeholder="Enter mobile number"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
@@ -258,8 +203,7 @@ export default function AddUser() {
               value={formData.password}
               onChange={handleChange}
               required={!editUser}
-              placeholder="Enter password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
@@ -272,7 +216,7 @@ export default function AddUser() {
               value={formData.role}
               onChange={handleChange}
               required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             >
               <option value="">Select Role</option>
               {roles.map((r) => (
@@ -294,19 +238,20 @@ export default function AddUser() {
               name="passportNo"
               value={formData.passportNo}
               onChange={handleChange}
-              placeholder="Enter passport number"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">DOB</label>
+            <label className="block text-sm font-medium text-gray-700">
+              DOB
+            </label>
             <input
               name="dob"
               type="date"
               value={formData.dob}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base"
             />
           </div>
 
@@ -318,47 +263,37 @@ export default function AddUser() {
               name="address"
               value={formData.address}
               onChange={handleChange}
-              placeholder="Enter address"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              rows={4}
+              className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-3 px-4 text-base resize-vertical"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Profile Image {editUser ? "(optional)" : <span className="text-red-500">*</span>}
+              Profile Image{" "}
+              {editUser ? "" : <span className="text-red-500">*</span>}
             </label>
             <input
               name="profileImage"
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="mt-1 block w-full text-base text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700"
+              className="mt-1 block w-full text-base text-gray-900 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 file:border-0 file:bg-indigo-50 file:text-indigo-700 file:rounded-md file:py-2 file:px-3 file:font-medium file:cursor-pointer hover:file:bg-indigo-100"
+              required={!editUser}
             />
             {previewImage ? (
-              <div className="mt-2 flex items-center">
-                <img
-                  src={previewImage}
-                  alt="Profile Preview"
-                  className="w-20 h-20 rounded-full object-cover"
-                  onError={(e) => {
-                    console.error("Image failed to load:", previewImage); // ✅ Debug
-                    setImageError("Failed to load image");
-                    e.target.src = "https://via.placeholder.com/80"; // Fallback image
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleClearImage}
-                  className="ml-4 text-sm text-red-500 hover:text-red-700"
-                >
-                  Clear Image
-                </button>
-              </div>
-            ) : (
-              <p className="mt-2 text-sm text-gray-500">
-                {imageError || (editUser ? "No image selected" : "Please select an image")}
-              </p>
-            )}
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="mt-2 w-20 h-20 rounded-full object-cover"
+              />
+            ) : editUser?.profileImage ? (
+              <img
+                src={editUser.profileImage}
+                alt="Profile"
+                className="mt-2 w-20 h-20 rounded-full object-cover"
+              />
+            ) : null}
           </div>
 
           <div className="flex items-center">
@@ -367,9 +302,9 @@ export default function AddUser() {
               type="checkbox"
               checked={formData.isActive}
               onChange={handleChange}
-              className="h-5 w-5 text-indigo-600 border-gray-300 rounded"
+              className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
-            <label className="ml-2 text-base text-gray-700">Active</label>
+            <label className="ml-2 text-sm text-gray-700">Active</label>
           </div>
         </div>
 
@@ -377,9 +312,9 @@ export default function AddUser() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded-md text-white ${
-              loading ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
+            className={`w-full py-3 px-4 rounded-md text-white font-medium ${
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            } transition-colors`}
           >
             {loading
               ? editUser
