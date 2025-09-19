@@ -1,4 +1,3 @@
-
 import { useContext } from "react";
 import {
   BrowserRouter as Router,
@@ -43,7 +42,6 @@ import AddPermission from "./pages/AddPermission";
 import User from "./pages/User";
 import AddUser from "./pages/AddUser";
 
-
 const App = () => {
   return (
     <>
@@ -55,14 +53,14 @@ const App = () => {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
 
-            <Route path="/user" element={<User />} />
-            <Route path="/user/add" element={<AddUser />} />
+              <Route path="/user" element={<User />} />
+              <Route path="/user/add" element={<AddUser />} />
 
               <Route path="/permission" element={<Permission />} />
               <Route path="/add-permission" element={<AddPermission />} />
               <Route path="/add-permission/:id" element={<AddPermission />} />
 
-              <Route path="/role" element={<Role/>} />
+              <Route path="/role" element={<Role />} />
               <Route path="/add-role" element={<AddRoles />} />
               <Route path="/add-role/:id" element={<AddRoles />} />
 
@@ -90,7 +88,6 @@ const App = () => {
               <Route path="/add-followup" element={<AddFollowup />} />
               <Route path="/add-followup/:id" element={<AddFollowup />} />
 
-
               <Route path="/customerDocs" element={<CustomerDocs />} />
               <Route path="/add-CustomerDoc" element={<AddCustomerDoc />} />
 
@@ -100,12 +97,14 @@ const App = () => {
 
               <Route path="/notification" element={<Notification />} />
               <Route path="/add-notification" element={<AddNotification />} />
-              <Route path="/add-notification/:id" element={<AddNotification />} />
+              <Route
+                path="/add-notification/:id"
+                element={<AddNotification />}
+              />
 
               <Route path="/auditLog" element={<AuditLog />} />
               <Route path="/add-auditLog" element={<AddAuditLog />} />
               <Route path="/add-auditLog/:id" element={<AddAuditLog />} />
-
             </Route>
             <Route path="/" element={<Root />} />
             <Route path="*" element={<NotFound />} />
@@ -134,5 +133,3 @@ const Root = () => {
     <Navigate to="/user/dashboard" />
   );
 };
-
-
